@@ -1,0 +1,14 @@
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <env:Header>
+        <urn:SessionHeader xmlns:urn="http://soap.sforce.com/2006/04/metadata">
+            <urn:sessionId>{{authToken}}</urn:sessionId>
+        </urn:SessionHeader>
+    </env:Header>
+    <env:Body>
+        <deleteMetadata xmlns="http://soap.sforce.com/2006/04/metadata">
+            <metadataType>RemoteSiteSetting</metadataType>
+            <fullName>{{name}}</fullName>
+        </deleteMetadata>
+    </env:Body>
+</env:Envelope>

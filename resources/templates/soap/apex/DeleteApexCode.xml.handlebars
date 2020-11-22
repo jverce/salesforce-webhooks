@@ -1,0 +1,21 @@
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <env:Header>
+        <urn:SessionHeader xmlns:urn="http://soap.sforce.com/2006/08/apex">
+            <urn:sessionId>{{authToken}}</urn:sessionId>
+        </urn:SessionHeader>
+    </env:Header>
+    <env:Body>
+        <compileAndTest xmlns="http://soap.sforce.com/2006/08/apex">
+            <CompileAndTestRequest>
+                {{#each classNames}}
+                <deleteClasses>{{this}}</deleteClasses>
+                {{/each}}
+
+                {{#each triggerNames}}
+                <deleteTriggers>{{this}}</deleteTriggers>
+                {{/each}}
+            </CompileAndTestRequest>
+        </compileAndTest>
+    </env:Body>
+</env:Envelope>

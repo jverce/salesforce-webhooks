@@ -1,0 +1,13 @@
+trigger {{triggerName}} on {{objectType}} (after update) {
+    for ({{objectType}} item : Trigger.New) {
+        final Map<String, {{objectType}}> eventData = new Map<String, {{objectType}}>();
+        eventData.put('New', item);
+
+        if (Trigger.OldMap != null) {
+            final {{objectType}} oldItem = Trigger.OldMap.get(item.Id);
+            eventData.put('Old', oldItem);
+        }
+        String content = {{webhookCalloutName}}.jsonContent(eventData);
+        {{webhookCalloutName}}.callout('{{endpointUrl}}', content);
+    }
+}

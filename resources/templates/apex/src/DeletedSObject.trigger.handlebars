@@ -1,0 +1,8 @@
+trigger {{triggerName}} on {{objectType}} (after delete) {
+    for ({{objectType}} item : Trigger.Old) {
+        final Map<String, {{objectType}}> eventData = new Map<String, {{objectType}}>();
+        eventData.put('Old', item);
+        String content = {{webhookCalloutName}}.jsonContent(eventData);
+        {{webhookCalloutName}}.callout('{{endpointUrl}}', content);
+    }
+}

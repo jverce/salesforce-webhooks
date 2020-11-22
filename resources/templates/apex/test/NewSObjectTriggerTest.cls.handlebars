@@ -1,0 +1,16 @@
+@isTest
+public class {{testClassName}} {
+    @isTest
+    static void testBatch() {
+        Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
+        List<{{sObjectType}}> a =
+            (List<{{sObjectType}}>) {{sObjectFactoryName}}.createSObjectList('{{sObjectType}}', true, 32);
+        insert a;
+    }
+    @isTest
+    static void testSingle() {
+        Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
+        {{sObjectType}} a = ({{sObjectType}}) {{sObjectFactoryName}}.createSObject('{{sObjectType}}', true);
+        insert a;
+    }
+}

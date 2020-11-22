@@ -1,0 +1,8 @@
+trigger {{triggerName}} on {{sObjectType}} (after insert) {
+    for ({{sObjectType}} item : Trigger.New) {
+        final Map<String, {{sObjectType}}> eventData = new Map<String, {{sObjectType}}>();
+        eventData.put('New', item);
+        String content = {{webhookCalloutName}}.jsonContent(eventData);
+        {{webhookCalloutName}}.callout('{{endpointUrl}}', content);
+    }
+}
