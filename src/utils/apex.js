@@ -79,3 +79,29 @@ export const getWebhookTriggerTest = (
     name: testClassName,
   };
 };
+
+export const getDeployApexCodeBody = (authToken, classes, triggers) => {
+  const template = require('../../resources/templates/soap/apex/DeployApexCode.xml.handlebars');
+  const classBodies = classes.map(c => c.body);
+  const triggerBodies = triggers.map(t => t.body);
+  const body = template({
+    authToken,
+    classBodies,
+    triggerBodies,
+  });
+  return {
+    body,
+  };
+};
+
+export const getDeleteApexCodeBody = (authToken, classNames, triggerNames) => {
+  const template = require('../../resources/templates/soap/apex/DeleteApexCode.xml.handlebars');
+  const body = template({
+    authToken,
+    classNames,
+    triggerNames,
+  });
+  return {
+    body,
+  };
+};

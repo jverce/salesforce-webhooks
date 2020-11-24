@@ -1,6 +1,6 @@
 import { getRandomName } from './common';
 
-export const getCreateRemoteSiteBody = (endpointUrl, authToken) => {
+export const getCreateRemoteSiteBody = (authToken, endpointUrl) => {
   const name = getRandomName('Endpoint');
   const template = require('../../resources/templates/soap/metadata/CreateRemoteSite.xml.handlebars');
   const body = template({
@@ -12,4 +12,15 @@ export const getCreateRemoteSiteBody = (endpointUrl, authToken) => {
     body,
     name,
   };
-}
+};
+
+export const getDeleteRemoteSiteBody = (authToken, name) => {
+  const template = require('../../resources/templates/soap/metadata/DeleteRemoteSite.xml.handlebars');
+  const body = template({
+    authToken,
+    name,
+  });
+  return {
+    body,
+  };
+};

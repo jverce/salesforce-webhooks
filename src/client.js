@@ -1,8 +1,10 @@
 'use strict';
 
-import { post } from 'axios';
+import Axios, { post } from 'axios';
 
 import {
+  getDeleteApexCodeBody,
+  getDeployApexCodeBody,
   getSObjectFactory,
   getWebhookCallout,
   getWebhookCalloutMock,
@@ -11,6 +13,7 @@ import {
 } from './utils/apex';
 import {
   getCreateRemoteSiteBody,
+  getDeleteRemoteSiteBody,
 } from './utils/metadata';
 
 export class SalesforceClient {
@@ -44,13 +47,6 @@ export class SalesforceClient {
       triggerTest,
       webhookCallout,
       webhookTrigger,
-    };
-  }
-
-  _baseHeaders() {
-    return {
-      'Authorization': `Bearer ${this.authToken}`,
-      'Content-Type': 'text/xml',
     };
   }
 
@@ -105,19 +101,15 @@ export class SalesforceClient {
     };
   }
 
-  _getDeployApexCodeRequest(apexComponents) {
-    const {
-      classes,
-      triggers,
-    } = apexComponents;
-    const template = require('../resources/templates/soap/apex/DeployApexCode.xml.handlebars');
-    const classBodies = classes.map(c => c.body);
-    const triggerBodies = triggers.map(t => t.body);
-    const body = template({
-      authToken: this.authToken,
-      classBodies,
-      triggerBodies,
-    });
+  _baseHeaders() {
+    return {
+      'Authorization': `Bearer ${this.authToken}`,
+      'Content-Type': 'text/xml',
+    };
+  }
+
+  _getDeployApexCodeRequest(classes, triggers) {
+    const { body } = getDeployApexCodeBody(this.authToken, classes, triggers);
     const headers = {
       ...this._baseHeaders(),
       'SOAPAction': 'compileAndTest',
@@ -131,9 +123,9 @@ export class SalesforceClient {
   async _createRemoteSiteSetting(opts) {
     const { endpointUrl } = opts;
     const {
-      name,
       body,
-    } = getCreateRemoteSiteBody(endpointUrl, this.authToken);
+      name,
+    } = getCreateRemoteSiteBody(this.authToken, endpointUrl);
     const headers = {
       ...this._baseHeaders(),
       'SOAPAction': 'remoteSiteSetting',
@@ -148,7 +140,7 @@ export class SalesforceClient {
       };
     } catch(error) {
       console.error(`
-        Could not deploy Apex code to Salesforce.
+        Could not setup remote site in Salesforce.
         - Error message: ${error}
         - Remote Site name: ${name}
       `);
@@ -175,13 +167,16 @@ export class SalesforceClient {
       triggerTestTemplate,
     );
 
-    const classNames = apexComponents.classes.map(c => c.name);
-    const triggerNames = apexComponents.triggers.map(t => t.name);
-
+    const {
+      classes,
+      triggers,
+    } = apexComponents;
+    const classNames = classes.map(c => c.name);
+    const triggerNames = triggers.map(t => t.name);
     const {
       body,
       headers,
-    } = this._getDeployApexCodeRequest(apexComponents);
+    } = this._getDeployApexCodeRequest(classes, triggers);
     const requestConfig = {
       headers,
     };
@@ -235,7 +230,7 @@ export class SalesforceClient {
 
   async createWebhookUpdated(opts) {
     const triggerTemplate = require('../resources/templates/apex/src/UpdatedSObject.trigger.handlebars');
-    const triggerTestTemplate = require('../resources/templates/apex/test/NewSObjectTriggerTest.cls.handlebars');
+    const triggerTestTemplate = require('../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,
@@ -245,7 +240,7 @@ export class SalesforceClient {
 
   async createWebhookDeleted(opts) {
     const triggerTemplate = require('../resources/templates/apex/src/DeletedSObject.trigger.handlebars');
-    const triggerTestTemplate = require('../resources/templates/apex/test/NewSObjectTriggerTest.cls.handlebars');
+    const triggerTestTemplate = require('../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,
@@ -265,6 +260,93 @@ export class SalesforceClient {
       const errorMessage = `Invalid event type: ${event}`;
       throw new Error(errorMessage);
     }
+  }
+
+  _getDeleteApexCodeRequest(classNames, triggerNames) {
+    const { body } = getDeleteApexCodeBody(this.authToken, classNames, triggerNames);
+    const headers = {
+      ...this._baseHeaders(),
+      'SOAPAction': 'compileAndTest',
+    };
+    return {
+      body,
+      headers,
+    };
+  }
+
+  async _deleteApexCode(classNames, triggerNames) {
+    const {
+      body,
+      headers,
+    } = this._getDeleteApexCodeRequest(classNames, triggerNames);
+    const requestConfig = {
+      headers,
+    };
+    try {
+      await post(this.soapApiUrl, body, requestConfig);
+    } catch (error) {
+      console.error(`
+        Could not delete Apex code from Salesforce.
+        - Error message: ${error}
+        - Classes: ${JSON.stringify(classNames, null, 2)}
+        - Triggers: ${JSON.stringify(triggerNames, null, 2)}
+      `);
+      throw new Error(`${error}`);
+    }
+  }
+
+  _getDeleteRemoteSiteSettingRequest(remoteSiteName) {
+    const { body } = getDeleteRemoteSiteBody(this.authToken, remoteSiteName);
+    const headers = {
+      ...this._baseHeaders(),
+      'SOAPAction': 'remoteSiteSetting',
+    };
+    return {
+      body,
+      headers,
+    };
+  }
+
+  async _deleteRemoteSiteSetting(remoteSiteName) {
+    const {
+      body,
+      headers,
+    } = this._getDeleteRemoteSiteSettingRequest(remoteSiteName);
+    const requestConfig = {
+      headers,
+    };
+    try {
+      await post(this.metadataApiUrl, body, requestConfig);
+    } catch(error) {
+      console.error(`
+        Could not delete remote site setting from Salesforce.
+        - Error message: ${error}
+        - Remote Site name: ${remoteSiteName}
+      `);
+      throw new Error(`${error}`);
+    }
+  }
+
+  async _deleteWebhookWorkflow(
+    remoteSiteName,
+    classNames,
+    triggerNames,
+  ) {
+    await this._deleteApexCode(classNames, triggerNames);
+    await this._deleteRemoteSiteSetting(remoteSiteName);
+  }
+
+  async deleteWebhook(opts) {
+    const {
+      remoteSiteName,
+      classNames,
+      triggerNames,
+    } = opts;
+    return this._deleteWebhookWorkflow(
+      remoteSiteName,
+      classNames,
+      triggerNames,
+    );
   }
 
 }
