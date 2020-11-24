@@ -1,0 +1,3 @@
+export {
+  SalesforceClient
+} from './client';

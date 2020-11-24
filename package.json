@@ -1,11 +1,12 @@
 {
   "name": "salesforce-webhooks",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Provides an interface to create webhooks in Salesforce for different SObject events",
-  "main": "src/index.js",
+  "main": "dist/main.js",
+  "module": "src/index.js",
   "scripts": {
     "test": "mocha",
-    "build": "mkdir -p dist && handlebars ./resources/templates -f dist/templates.js",
+    "build": "webpack",
     "clean": "rm -rf dist"
   },
   "repository": {
@@ -21,7 +22,15 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "clean-webpack-plugin": "^3.0.0",
     "handlebars": "^4.7.6",
-    "mocha": "^8.2.1"
+    "mocha": "^8.2.1",
+    "webpack": "^5.6.0",
+    "webpack-cli": "^4.2.0"
+  },
+  "dependencies": {
+    "axios": "^0.21.0",
+    "handlebars-loader": "^1.7.1",
+    "uuid": "^8.3.1"
   }
 }
