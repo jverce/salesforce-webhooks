@@ -52,9 +52,8 @@ Salesforce organization:
   running. See [this
   page](https://help.salesforce.com/articleView?id=000314281&type=1&mode=1&language=en_US)
   for more information.
-- **API Version**: this is an optional parameter, but when provided it must be
-  greater than `40.0` since this is the earliest version that supports Apex
-  code. It is set to `50.0` by default.
+- **API Version**: this is an optional parameter. It is set to `50.0` by
+  default, and this is the target version for which this package was developed.
 
 The above parameter names are `authToken`, `instance` and `apiVersion`,
 respectively. So, to create a new instance of `SalesforceClient` execute the

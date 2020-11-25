@@ -47,10 +47,6 @@ export class SalesforceClient {
       throw new Error(`Invalid API version parameter: ${apiVersion}`);
     }
 
-    if (parseFloat(apiVersion) < 40.0) {
-      throw new Error('The minimum API version to use is "40.0".');
-    }
-
     if (!authToken) {
       throw new Error(`An authentication token must be provided.`);
     }
