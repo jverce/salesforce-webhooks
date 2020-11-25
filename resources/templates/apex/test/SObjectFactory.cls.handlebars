@@ -188,7 +188,9 @@ public with sharing class {{name}} {
         Boolean cascade
     ) {
         return (
-            fieldDescribe.isCreateable() && (
+            fieldDescribe.isCreateable() &&
+            !fieldDescribe.isDefaultedOnCreate() &&
+            (
                 isIncludedField(obj, fieldDescribe) || (
                     (
                         (!fieldDescribe.isNillable() || FillAllFields) ||
