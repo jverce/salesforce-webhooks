@@ -1,6 +1,6 @@
-trigger {{triggerName}} on {{objectType}} (after delete) {
-    for ({{objectType}} item : Trigger.Old) {
-        final Map<String, {{objectType}}> eventData = new Map<String, {{objectType}}>();
+trigger {{triggerName}} on {{sObjectType}} (after delete) {
+    for ({{sObjectType}} item : Trigger.Old) {
+        final Map<String, {{sObjectType}}> eventData = new Map<String, {{sObjectType}}>();
         eventData.put('Old', item);
         String content = {{webhookCalloutName}}.jsonContent(eventData);
         {{webhookCalloutName}}.callout('{{endpointUrl}}', content);
