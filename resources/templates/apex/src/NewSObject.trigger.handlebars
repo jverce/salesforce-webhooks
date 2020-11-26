@@ -1,8 +1,29 @@
 trigger {{triggerName}} on {{sObjectType}} (after insert) {
-    for ({{sObjectType}} item : Trigger.New) {
+    final List<SObjectField> fields = {{sObjectType}}.getSObjectType()
+        .getDescribe()
+        .fields
+        .getMap()
+        .values();
+    final List<String> fieldNames = new List<String>();
+    for (SObjectField f : fields) {
+        final String fieldName = f.getDescribe().getName();
+        fieldNames.add(fieldName);
+    }
+    final String joinedFieldNames = String.join(fieldNames, ', ');
+    for (SObject item : Trigger.New) {
+        final String query = String.format(
+            'SELECT {0} FROM {{sObjectType}} WHERE Id = \'\'{1}\'\'',
+            new List<String> {
+                joinedFieldNames,
+                String.valueOf(item.Id)
+            }
+        );
+        final {{sObjectType}} itemFull = ({{sObjectType}}) Database.query(query);
+
         final Map<String, {{sObjectType}}> eventData = new Map<String, {{sObjectType}}>();
-        eventData.put('New', item);
-        String content = {{webhookCalloutName}}.jsonContent(eventData);
+        eventData.put('New', itemFull);
+
+        final String content = {{webhookCalloutName}}.jsonContent(eventData);
         {{webhookCalloutName}}.callout('{{endpointUrl}}', content);
     }
 }

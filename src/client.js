@@ -361,7 +361,7 @@ export class SalesforceClient {
   async createWebhookUpdated(opts) {
     this._validateCreateWebhookOpts(opts);
     const triggerTemplate = require('../resources/templates/apex/src/UpdatedSObject.trigger.handlebars');
-    const triggerTestTemplate = require('../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars');
+    const triggerTestTemplate = require('../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,

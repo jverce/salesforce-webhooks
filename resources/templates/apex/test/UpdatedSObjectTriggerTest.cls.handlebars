@@ -13,6 +13,6 @@ public class {{testClassName}} {
         Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
         {{sObjectType}} a = ({{sObjectType}}) {{sObjectFactoryName}}.createSObject('{{sObjectType}}', true);
         insert a;
-        insert a;
+        update a;
     }
 }

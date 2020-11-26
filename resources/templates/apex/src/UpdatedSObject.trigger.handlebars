@@ -1,13 +1,34 @@
 trigger {{triggerName}} on {{sObjectType}} (after update) {
-    for ({{sObjectType}} item : Trigger.New) {
+    final List<SObjectField> fields = {{sObjectType}}.getSObjectType()
+        .getDescribe()
+        .fields
+        .getMap()
+        .values();
+    final List<String> fieldNames = new List<String>();
+    for (SObjectField f : fields) {
+        final String fieldName = f.getDescribe().getName();
+        fieldNames.add(fieldName);
+    }
+    final String joinedFieldNames = String.join(fieldNames, ', ');
+    for (SObject item : Trigger.New) {
+        final String query = String.format(
+            'SELECT {0} FROM {{sObjectType}} WHERE Id = \'\'{1}\'\'',
+            new List<String> {
+                joinedFieldNames,
+                String.valueOf(item.Id)
+            }
+        );
+        final {{sObjectType}} itemFull = ({{sObjectType}}) Database.query(query);
+
         final Map<String, {{sObjectType}}> eventData = new Map<String, {{sObjectType}}>();
-        eventData.put('New', item);
+        eventData.put('New', itemFull);
 
         if (Trigger.OldMap != null) {
-            final {{sObjectType}} oldItem = Trigger.OldMap.get(item.Id);
+            final {{sObjectType}} oldItem = ({{sObjectType}}) Trigger.OldMap.get(item.Id);
             eventData.put('Old', oldItem);
         }
-        String content = {{webhookCalloutName}}.jsonContent(eventData);
+
+        final String content = {{webhookCalloutName}}.jsonContent(eventData);
         {{webhookCalloutName}}.callout('{{endpointUrl}}', content);
     }
 }
