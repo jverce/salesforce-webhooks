@@ -32,6 +32,9 @@ public with sharing class {{name}} {
     private static final Map<String, Schema.SObjectType> GlobalDescribe =
         Schema.getGlobalDescribe();
 
+    private static final Map<String, SObject> SObjectCache =
+        new Map<String, SObject>();
+
     // Default Country and State
     // When Country and State Picklists are enabled, cannot dynamically resolve which States are within a Country
     public static string DefaultCountry = 'United States';
@@ -91,23 +94,84 @@ public with sharing class {{name}} {
     ) {
         List<SObject> sos = new List<SObject>();
         for( Integer i = 0; i < numberOfObjects; i++ ) {
+            SObjectCache.clear();
             Integer counter = i + initialCounter;
             sos.add(createSObject(objectType, cascade, counter));
         }
         return sos;
     }
 
-    public static SObject createSObject(String objectType, Boolean cascade, Integer counter) {
-        System.debug('Creating ' + objectType);
-        Schema.sObjectType token = GlobalDescribe.get(objectType);
+    private static SObject newInstance(String objectType) {
+        final Schema.sObjectType token = GlobalDescribe.get(objectType);
         if (token == null) {
             throw new IllegalArgumentException('Unsupported ObjectType ' + objectType);
+        } else if (!token.getDescribe().isCreateable()) {
+            System.debug(String.format(
+                'Type "{0}" is not createable, setting to "null"',
+                new List<String> {
+                    objectType
+                }
+            ));
+            return null;
+        }
+        return token.newSObject();
+    }
+
+    private static SObject getSObjectFromCache(String objectType, Boolean isRoot) {
+        if (!SObjectCache.containsKey(objectType)) {
+            final SObject obj = newInstance(objectType);
+            SObjectCache.put(objectType, obj);
+            return obj;
         }
 
-        SObject obj = token.newSObject();
+        System.debug(String.format(
+            'Retrieving cached instance of type {0}',
+            new List<String> {
+                objectType
+            }
+        ));
+
+        final SObject obj = SObjectCache.get(objectType);
+        if (obj != null && obj.Id == null && !isRoot) {
+            System.debug(String.format(
+                'Persisting cached object of type "{0}" since' +
+                'it\'s only in memory and doesn\'t have an ID yet',
+                new List<String> {
+                    objectType
+                }
+            ));
+            insert obj;
+            SObjectCache.put(objectType, obj);
+        }
+
+        return obj;
+    }
+
+    public static SObject createSObject(String objectType, Boolean cascade, Integer counter) {
+        return createSObject(objectType, cascade, counter, true);
+    }
+
+    public static SObject createSObject(
+        String objectType,
+        Boolean cascade,
+        Integer counter,
+        Boolean isRoot
+    ) {
+        final SObject obj = getSObjectFromCache(objectType, isRoot);
+        if (obj == null || obj.Id != null) {
+            return obj;
+        }
+
         for (Schema.SObjectField field : fieldMapFor(objectType).values()) {
             setFieldValue(obj, field, cascade, counter);
         }
+
+        if (obj.Id == null && !isRoot) {
+            System.debug('Inserting child node ' + obj);
+            insert obj;
+        }
+
+        SObjectCache.put(objectType, obj);
         return obj;
     }
 
@@ -320,7 +384,6 @@ public with sharing class {{name}} {
                     referenceObjectType != obj.getSObjectType().getDescribe().getName() &&
                     referenceObjectType !='BusinessHours'
                 ) {
-                    // TODO avoid infinite loop for same-type references
                     System.debug(
                         String.format(
                             'Creating reference to {0} for field {1}.{2}',
@@ -331,9 +394,13 @@ public with sharing class {{name}} {
                             }
                         )
                     );
-                    SObject reference = createSObject(referenceObjectType, cascade, counter + 1);
-                    System.debug('Inserting ' + reference);
-                    insert reference;
+                    SObject reference = createSObject(referenceObjectType, cascade, counter + 1, false);
+                    if (reference == null) {
+                        System.debug('Skipping instance of type ' + referenceObjectType);
+                        obj.put(field, null);
+                        return;
+                    }
+
                     obj.put(field, reference.Id);
                 }
             } else if (fieldDescribe.getType() == Schema.DisplayType.TextArea) {
