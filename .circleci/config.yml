@@ -1,0 +1,80 @@
+version: 2
+
+general:
+# Uncomment the following to specify only a specific branch
+#   branches:
+#     only:
+#       - dev # specific branch
+#       - /dev-.*/ # or regexes
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:lts-buster
+
+    environment:
+      - DX_CLI_URL: 'https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz'
+
+    steps:
+      - checkout
+
+      - run:
+          name: Node Dependencies
+          command: |
+            npm install
+
+      - run:
+          name: Build Package
+          command: |
+            npm run build
+
+      - run:
+          name: Salesforce CLI
+          command: |
+            mkdir sfdx
+            wget -qO- $DX_CLI_URL | tar xJ -C sfdx --strip-components 1
+            ./sfdx/install
+            sfdx
+            mkdir tmp
+
+      - run:
+          name: Other Dependencies
+          command: |
+            wget -q -O jq 'https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64'
+            chmod +x jq
+
+      - run:
+          name: Create Cert and Key Files
+          command: |
+            mkdir keys
+            echo $SERVER_CRT_BASE64 | base64 -d > keys/server.crt
+            echo $SERVER_KEY_ENC_BASE64 | base64 -d > keys/server.key.enc
+            openssl enc -nosalt -aes-256-cbc -d -in keys/server.key.enc -out keys/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+
+      - run:
+          name: Setup Org
+          command: |
+            sfdx force:auth:jwt:grant --clientid $HUB_CONSUMER_KEY --jwtkeyfile keys/server.key --username $HUB_SFDC_USER --setdefaultdevhubusername -a hub
+            sfdx force --help
+            # sfdx force:org:create -s -f ~/ci_app/test/integ/config/project-scratch-def.json -a circle_build_$CIRCLE_BUILD_NUM --wait 5
+
+      - run:
+          name: Integration Tests
+          working_directory: test/integ
+          no_output_timeout: 90m
+          environment:
+            - SALESFORCE_API_VERSION: '50.0'
+          command: |
+            ./deploy_and_test_apex.sh
+
+      # - run:
+      #     name: Delete Useless Scratch Org
+      #     command: |
+      #       sfdx force:org:delete -u circle_build_$CIRCLE_BUILD_NUM -p
+
+### Uncomment the following if performing deployments
+#deployment:
+#  override:
+#    - sfdx force:source:convert -r force-app -d testDeploy
+#    - . cleanupDeploy.sh
+#    - sfdx force:mdapi:deploy -d testDeploy/ -u deploy -w 2
