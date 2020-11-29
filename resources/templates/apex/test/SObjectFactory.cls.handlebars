@@ -285,7 +285,7 @@ public with sharing class {{name}} {
             } else if (fieldDescribe.getName().endsWith('StateCode')) {
                 obj.put(field, DefaultStateCode);
             } else if (fieldDescribe.getType() == Schema.DisplayType.base64) {
-                Integer randomComponent = (Integer) (Math.random() * 1000000);
+                Integer randomComponent = (Integer) (Math.random() * 1000);
                 String value = String.format(
                     '{0}-{1}',
                     new List<String> {
@@ -319,7 +319,7 @@ public with sharing class {{name}} {
             } else if (fieldDescribe.getType() == Schema.DisplayType.Id) {
                 // Ignore, we don't specify ID's when creating objects.
             } else if (fieldDescribe.getType() == Schema.DisplayType.Integer) {
-                Integer value = (Integer) (Math.random() * 1000000);
+                Integer value = (Integer) (Math.random() * 1000);
                 obj.put(field, value);
             } else if (fieldDescribe.getType() == Schema.DisplayType.MultiPicklist) {
                 obj.put(field, getDefaultPicklistValue(obj, fieldDescribe));
@@ -333,7 +333,7 @@ public with sharing class {{name}} {
                 fieldDescribe.getName() == 'CommunityNickname' &&
                 fieldDescribe.getType() == Schema.DisplayType.String
             ) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000000);
+                Long randomComponent = Math.roundToLong(Math.random() * 1000);
                 String value = String.format(
                     'test{0}',
                     new List<String> {
@@ -342,10 +342,10 @@ public with sharing class {{name}} {
                 );
                 obj.put(field, value);
             } else if (
-                fieldDescribe.getName() == 'UserName' &&
+                fieldDescribe.getName() == 'Username' &&
                 fieldDescribe.getType() == Schema.DisplayType.String
             ) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000000);
+                Long randomComponent = Math.roundToLong(Math.random() * 1000);
                 String dateComponent = Datetime.now().format()
                     .replace('-', '')
                     .replace(':', '')
@@ -360,10 +360,10 @@ public with sharing class {{name}} {
                 );
                 obj.put(field, value);
             } else if (fieldDescribe.getType() == Schema.DisplayType.String) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000000);
+                Long randomComponent = Math.roundToLong(Math.random() * 1000);
                 Integer maxLength = fieldDescribe.getLength();
                 String preliminaryValue = String.format(
-                    '{0}-{1}',
+                    'a{0}{1}',
                     new List<String> {
                         counter.format(),
                         randomComponent.format()
