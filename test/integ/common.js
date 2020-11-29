@@ -1,5 +1,5 @@
 const axios = require('axios');
-const fs = require('fs/promises');
+const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const qs = require('querystring');
 
@@ -25,12 +25,14 @@ const getJwtToken = (keyFilename, certFilename) => {
     algorithm: 'RS256',
   };
 
-  const privateKey = await fs.readFile(keyFilename);
+  const privateKey = fs.readFileSync(keyFilename);
   const token = jwt.sign(payload, privateKey, options);
 
   if (certFilename !== undefined) {
-    const cert = await fs.readFile(certFilename);
+    const cert = fs.readFileSync(certFilename);
     jwt.verify(token, cert);
+  } else {
+    console.warn(`Working with private key '${keyFilename}' without verification`)
   }
 
   return token;
