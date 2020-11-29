@@ -341,19 +341,15 @@ public with sharing class {{name}} {
                     }
                 );
                 obj.put(field, value);
-            } else if (
-                fieldDescribe.getName() == 'Username' &&
-                fieldDescribe.getType() == Schema.DisplayType.String
-            ) {
+            } else if (fieldDescribe.getName() == 'Username') {
                 Long randomComponent = Math.roundToLong(Math.random() * 1000);
                 String dateComponent = Datetime.now().format()
                     .replace('-', '')
                     .replace(':', '')
                     .replace(' ', '');
                 String value = String.format(
-                    'test{0}{1}{2}@test.com',
+                    'test{0}{1}@test.com',
                     new List<String> {
-                        Userinfo.getOrganizationId(),
                         randomComponent.format(),
                         dateComponent
                     }

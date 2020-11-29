@@ -1,0 +1,37 @@
+trigger {{triggerName}} on {{sObjectType}} (after insert) {
+    final List<SObjectField> fields = {{associateParentEntity}}.getSObjectType()
+        .getDescribe()
+        .fields
+        .getMap()
+        .values();
+    final List<String> fieldNames = new List<String>();
+    for (SObjectField f : fields) {
+        final String fieldName = f.getDescribe().getName();
+        fieldNames.add(fieldName);
+    }
+    final String joinedFieldNames = String.join(fieldNames, ', ');
+    for ({{sObjectType}} item : Trigger.New) {
+        EventBus.ChangeEventHeader header = item.ChangeEventHeader;
+        final List<String> associateRecordIds = new List<String>();
+        for (String associateRecordId : header.recordIds) {
+            final String formatted = '\'' + associateRecordId + '\'';
+            associateRecordIds.add(formatted);
+        }
+        final String formattedAssociateRecordIds = String.join(associateRecordIds, ', ');
+        final String query = String.format(
+            'SELECT {0} FROM {{associateParentEntity}} WHERE Id IN ({1})',
+            new List<String> {
+                joinedFieldNames,
+                formattedAssociateRecordIds
+            }
+        );
+        final List<{{associateParentEntity}}> associatedRecords = Database.query(query);
+
+        final Map<String, object> eventData = new Map<String, object>();
+        eventData.put('New', item);
+        eventData.put('AssociatedRecords', associatedRecords);
+
+        final String content = {{webhookCalloutName}}.jsonContent(eventData);
+        {{webhookCalloutName}}.callout('{{endpointUrl}}', content);
+    }
+}

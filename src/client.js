@@ -1,6 +1,9 @@
 'use strict';
 
-import Axios, { post } from 'axios';
+import {
+  get as httpGet,
+  post as httpPost,
+} from 'axios';
 
 import {
   getDeleteApexCodeBody,
@@ -40,6 +43,7 @@ export class SalesforceClient {
     this.authToken = authToken;
     this.metadataApiUrl = `https://${instance}.salesforce.com/services/Soap/m/${apiVersion}`;
     this.soapApiUrl = `https://${instance}.salesforce.com/services/Soap/s/${apiVersion}`;
+    this.sObjectsApiUrl = `https://${instance}.salesforce.com/services/data/v${apiVersion}/sobjects`;
   }
 
   _validateConstructorOpts(apiVersion, authToken, instance) {
@@ -56,6 +60,16 @@ export class SalesforceClient {
     }
   }
 
+  async _getSObjectDescription(sObjectType) {
+    const url = `${this.sObjectsApiUrl}/${sObjectType}/describe`;
+    const headers = this._baseHeaders();
+    const requestConfig = {
+      headers,
+    };
+    const { data } = await httpGet(url, requestConfig);
+    return data;
+  }
+
   _getCommonApexComponents(secretToken) {
     const sObjectFactory = getSObjectFactory();
     const webhookCallout = getWebhookCallout(secretToken);
@@ -67,9 +81,10 @@ export class SalesforceClient {
     };
   }
 
-  _getApexComponents(
+  async _getApexComponents(
     endpointUrl,
     sObjectType,
+    associateParentEntity,
     secretToken,
     triggerTemplate,
     triggerTestTemplate,
@@ -79,16 +94,20 @@ export class SalesforceClient {
       webhookCallout,
       webhookCalloutMock,
     } = this._getCommonApexComponents(secretToken);
+
     const webhookTrigger = getWebhookTrigger(
       triggerTemplate,
       endpointUrl,
       sObjectType,
+      associateParentEntity,
       webhookCallout,
     );
+
+    const sObjectUnderTest = associateParentEntity ? associateParentEntity : sObjectType;
     const webhookTriggerTest = getWebhookTriggerTest(
       triggerTestTemplate,
       endpointUrl,
-      sObjectType,
+      sObjectUnderTest,
       sObjectFactory,
       webhookCalloutMock,
     );
@@ -140,7 +159,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await post(this.metadataApiUrl, body, requestConfig);
+      await httpPost(this.metadataApiUrl, body, requestConfig);
       return {
         remoteSiteName: name,
       };
@@ -162,12 +181,14 @@ export class SalesforceClient {
     const {
       endpointUrl,
       sObjectType,
+      associateParentEntity,
       secretToken = '',
     } = opts;
 
-    const apexComponents = this._getApexComponents(
+    const apexComponents = await this._getApexComponents(
       endpointUrl,
       sObjectType,
+      associateParentEntity,
       secretToken,
       triggerTemplate,
       triggerTestTemplate,
@@ -187,7 +208,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await post(this.soapApiUrl, body, requestConfig);
+      await httpPost(this.soapApiUrl, body, requestConfig);
       return {
         classNames,
         triggerNames,
@@ -245,7 +266,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await post(this.soapApiUrl, body, requestConfig);
+      await httpPost(this.soapApiUrl, body, requestConfig);
     } catch (error) {
       console.error(`
         Could not delete Apex code from Salesforce.
@@ -278,7 +299,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await post(this.metadataApiUrl, body, requestConfig);
+      await httpPost(this.metadataApiUrl, body, requestConfig);
     } catch(error) {
       console.error(`
         Could not delete remote site setting from Salesforce.
@@ -330,7 +351,21 @@ export class SalesforceClient {
    */
   async createWebhookNew(opts) {
     this._validateCreateWebhookOpts(opts);
-    const triggerTemplate = require('../resources/templates/apex/src/NewSObject.trigger.handlebars');
+
+    // Change events should be treated differently as they are special objects
+    // that get triggered asynchronously whenever their associated entity is
+    // mutated. See
+    // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
+    const sObjectDescription = await this._getSObjectDescription(opts.sObjectType);
+
+    let triggerTemplate;
+    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+      opts.associateParentEntity = sObjectDescription.associateParentEntity;
+      triggerTemplate = require('../resources/templates/apex/src/NewChangeEvent.trigger.handlebars');
+    } else {
+      triggerTemplate = require('../resources/templates/apex/src/NewSObject.trigger.handlebars');
+    }
+
     const triggerTestTemplate = require('../resources/templates/apex/test/NewSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
       triggerTemplate,
@@ -360,6 +395,16 @@ export class SalesforceClient {
    */
   async createWebhookUpdated(opts) {
     this._validateCreateWebhookOpts(opts);
+
+    // Change events should be treated differently as they are special objects
+    // that get triggered asynchronously whenever their associated entity is
+    // mutated. The **DO NOT SUPPORT** events other than `after insert`. See
+    // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
+    const sObjectDescription = await this._getSObjectDescription(opts.sObjectType);
+    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+      throw new Error(`${sObjectType} does not support "updated" events`);
+    }
+
     const triggerTemplate = require('../resources/templates/apex/src/UpdatedSObject.trigger.handlebars');
     const triggerTestTemplate = require('../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
@@ -389,6 +434,16 @@ export class SalesforceClient {
    */
   async createWebhookDeleted(opts) {
     this._validateCreateWebhookOpts(opts);
+
+    // Change events should be treated differently as they are special objects
+    // that get triggered asynchronously whenever their associated entity is
+    // mutated. The **DO NOT SUPPORT** events other than `after insert`. See
+    // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
+    const sObjectDescription = await this._getSObjectDescription(opts.sObjectType);
+    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+      throw new Error(`${sObjectType} does not support "deleted" events`);
+    }
+
     const triggerTemplate = require('../resources/templates/apex/src/DeletedSObject.trigger.handlebars');
     const triggerTestTemplate = require('../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
