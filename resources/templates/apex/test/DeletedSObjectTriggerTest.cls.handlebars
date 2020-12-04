@@ -4,7 +4,7 @@ public class {{testClassName}} {
     static void testBatch() {
         Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
         List<{{sObjectType}}> a =
-            (List<{{sObjectType}}>) {{sObjectFactoryName}}.createSObjectList('{{sObjectType}}', true, 32);
+            (List<{{sObjectType}}>) {{sObjectFactoryName}}.createSObjectList('{{sObjectType}}', true, 4);
         insert a;
         delete a;
     }
