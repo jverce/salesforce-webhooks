@@ -321,6 +321,7 @@ export class SalesforceClient {
 
   _validateCreateWebhookOpts({
     endpointUrl,
+    event,
     sObjectType,
   }) {
     if (!endpointUrl) {
@@ -329,6 +330,38 @@ export class SalesforceClient {
     if (!sObjectType) {
       throw new Error('Parameter "sObjectType" is required.')
     }
+    const allowedSObjectTypes = SalesforceClient.getAllowedSObjects(event);
+    if (!allowedSObjectTypes.includes(sObjectType)) {
+      throw new Error(`${sObjectType} is not supported for events of type "${event}".`);
+    }
+  }
+
+  static _getAllowedSObjectsNew() {
+    const basicSObjects = require('../resources/data/sobjects-new.json');
+    const changeEvents = require('../resources/data/sobjects-new-change-event.json');
+    return [
+      ...basicSObjects,
+      ...changeEvents
+    ].sort();
+  }
+
+  static _getAllowedSObjectsUpdated() {
+    return require('../resources/data/sobjects-updated.json');
+  }
+
+  static _getAllowedSObjectsDeleted() {
+    return require('../resources/data/sobjects-deleted.json');
+  }
+
+  static getAllowedSObjects(event) {
+    if (event === 'new') {
+      return this._getAllowedSObjectsNew();
+    } else if (event === 'updated') {
+      return this._getAllowedSObjectsUpdated();
+    } else if (event === 'deleted') {
+      return this._getAllowedSObjectsDeleted();
+    }
+    return [];
   }
 
   /**
@@ -350,7 +383,10 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookNew(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: 'new',
+    });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
@@ -394,7 +430,10 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookUpdated(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: 'updated',
+    });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
@@ -433,7 +472,10 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookDeleted(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: 'deleted',
+    });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
