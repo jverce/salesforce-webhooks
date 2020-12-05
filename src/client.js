@@ -214,6 +214,10 @@ export class SalesforceClient {
         triggerNames,
       };
     } catch(error) {
+      console.error('############ REQUEST ############')
+      console.error(error.request)
+      console.error('############ RESPONSE ###########')
+      console.error(error.response)
       console.error(`
         Could not deploy Apex code to Salesforce.
         - Error message: ${error}
