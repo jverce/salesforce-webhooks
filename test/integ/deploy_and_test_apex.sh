@@ -5,8 +5,9 @@
 #
 
 SOBJECT_LIST="../../resources/data/sobjects-new-change-event.json"
-for SOBJECT_TYPE in #`jq -c '.[]' ${SOBJECT_LIST} | sed -r 's/"//g'`
+for SOBJECT_TYPE in `jq -c '.[]' ${SOBJECT_LIST} | sed -r 's/"//g'`
 do
+    TEST_RESULTS_FILE="./test-results-${SOBJECT_TYPE}-new.json"
     WEBHOOK_DATA_FILE="./webhook-data-${SOBJECT_TYPE}.json"
 
     # Enabling the change event listener
@@ -33,7 +34,7 @@ do
         -r json \
         -c \
         -u "${HUB_SFDC_USER}" \
-        > test-results-${SOBJECT_TYPE}.json
+        > ${TEST_RESULTS_FILE}
     echo "Tests finished"
 
     # Disabling the change event listener
@@ -54,7 +55,6 @@ do
 
     echo "Cleaning up temp files..."
     rm ${WEBHOOK_DATA_FILE}
-    rm ${TEST_RESULTS_FILE}
 done
 
 
@@ -67,8 +67,8 @@ do
     SOBJECT_LIST="../../resources/data/sobjects-${EVENT_TYPE}.json"
     for SOBJECT_TYPE in `jq -c '.[]' ${SOBJECT_LIST} | sed -r 's/"//g'`
     do
-        WEBHOOK_DATA_FILE="./webhook-data-${SOBJECT_TYPE}-${EVENT_TYPE}.json"
         TEST_RESULTS_FILE="./test-results-${SOBJECT_TYPE}-${EVENT_TYPE}.json"
+        WEBHOOK_DATA_FILE="./webhook-data-${SOBJECT_TYPE}-${EVENT_TYPE}.json"
 
         # Create webhooks
         echo "Creating webhook for ${SOBJECT_TYPE} (event type: ${EVENT_TYPE})..."
@@ -78,6 +78,15 @@ do
             -s ${SOBJECT_TYPE} \
             -u 'https://example.com' \
             -o ${WEBHOOK_DATA_FILE}
+
+        EXIT_CODE=$?
+        if [ ${EXIT_CODE} -ne 0 ]
+        then
+
+            >&2 echo "Webhook for ${SOBJECT_TYPE} COULD NOT be created (event type: ${EVENT_TYPE})"
+            exit ${EXIT_CODE}
+        fi
+
         echo "Webhook for ${SOBJECT_TYPE} created (event type: ${EVENT_TYPE})"
 
         # Run tests
@@ -102,6 +111,18 @@ do
 
         echo "Cleaning up temp files..."
         rm ${WEBHOOK_DATA_FILE}
-        rm ${TEST_RESULTS_FILE}
     done
 done
+
+jq \
+    '. + { testResultsFilename: input_filename } | { status, message, result, stack, testResultsFilename }' \
+    test-results-*.json \
+| jq -s > test-results.json
+
+rm test-results-*.json
+
+TEST_REPORTS_DIR="${TEST_REPORTS_DIR_BASE}/deploy_and_test"
+mkdir -p ${TEST_REPORTS_DIR}
+./format-as-junit.js > ${TEST_REPORTS_DIR}/results.xml
+
+./detect-failed-tests.js

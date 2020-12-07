@@ -78,7 +78,11 @@ jobs:
           no_output_timeout: 270m
           environment:
             - SALESFORCE_API_VERSION: '50.0'
+            - TEST_REPORTS_DIR_BASE: test_reports
           command: |
             sfdx config:set defaultusername=${HUB_SFDC_USER}
             ./deploy_and_test_apex.sh
 
+      - store_test_results:
+          working_directory: test/integ
+          path: test/integ/test_reports
