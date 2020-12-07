@@ -1,6 +1,6 @@
 'use strict';
 
-import { get as httpGet, post as httpPost } from 'axios';
+import axios from 'axios';
 
 import {
   getDeleteApexCodeBody,
@@ -62,7 +62,7 @@ export class SalesforceClient {
     const requestConfig = {
       headers,
     };
-    const { data } = await httpGet(url, requestConfig);
+    const { data } = await axios.get(url, requestConfig);
     return data;
   }
 
@@ -152,7 +152,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await httpPost(this.metadataApiUrl, body, requestConfig);
+      await axios.post(this.metadataApiUrl, body, requestConfig);
       return {
         remoteSiteName: name,
       };
@@ -191,7 +191,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await httpPost(this.soapApiUrl, body, requestConfig);
+      await axios.post(this.soapApiUrl, body, requestConfig);
       return {
         classNames,
         triggerNames,
@@ -246,7 +246,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await httpPost(this.soapApiUrl, body, requestConfig);
+      await axios.post(this.soapApiUrl, body, requestConfig);
     } catch (error) {
       console.error(`
         Could not delete Apex code from Salesforce.
@@ -278,7 +278,7 @@ export class SalesforceClient {
       headers,
     };
     try {
-      await httpPost(this.metadataApiUrl, body, requestConfig);
+      await axios.post(this.metadataApiUrl, body, requestConfig);
     } catch (error) {
       console.error(`
         Could not delete remote site setting from Salesforce.
