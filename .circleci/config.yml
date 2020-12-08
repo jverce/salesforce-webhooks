@@ -8,8 +8,14 @@ general:
       - /feature\/.*/
       - /fix\/.*/
 
+defaults:
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:lts-buster
+
 jobs:
   build:
+    working_directory: ~/repo
     docker:
       - image: circleci/node:lts-buster
 
@@ -20,10 +26,24 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
+
       - run:
           name: Node Dependencies
           command: |
             npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package-lock.json" }}
+
+      - persist_to_workspace:
+          root: ~/repo
+          paths: .
 
       - run:
           name: Build Package
@@ -91,3 +111,9 @@ jobs:
       - store_test_results:
           working_directory: test/integ
           path: test/integ/test_reports
+
+      # - run:
+      #     name: Publish NPM Package
+      #     command: |
+      #       echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/project/.npmrc
+      #       npm publish
