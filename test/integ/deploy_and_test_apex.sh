@@ -5,7 +5,7 @@
 #
 
 SOBJECT_LIST="../../resources/data/sobjects-new-change-event.json"
-for SOBJECT_TYPE in `jq -c '.[]' ${SOBJECT_LIST} | sed -r 's/"//g'`
+for SOBJECT_TYPE in `jq -c '.[].name' ${SOBJECT_LIST} | sed -r 's/"//g'`
 do
     TEST_RESULTS_FILE="./test-results-${SOBJECT_TYPE}-new.json"
     WEBHOOK_DATA_FILE="./webhook-data-${SOBJECT_TYPE}.json"
@@ -65,7 +65,7 @@ done
 for EVENT_TYPE in new updated deleted
 do
     SOBJECT_LIST="../../resources/data/sobjects-${EVENT_TYPE}.json"
-    for SOBJECT_TYPE in `jq -c '.[]' ${SOBJECT_LIST} | sed -r 's/"//g'`
+    for SOBJECT_TYPE in `jq -c '.[].name' ${SOBJECT_LIST} | sed -r 's/"//g'`
     do
         TEST_RESULTS_FILE="./test-results-${SOBJECT_TYPE}-${EVENT_TYPE}.json"
         WEBHOOK_DATA_FILE="./webhook-data-${SOBJECT_TYPE}-${EVENT_TYPE}.json"
