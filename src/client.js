@@ -319,7 +319,7 @@ export class SalesforceClient {
         return 0;
       });
     }
-    return [...basicSObjects, ...changeEvents].map((i) => i.label).sort();
+    return [...basicSObjects, ...changeEvents].map((i) => i.name).sort();
   }
 
   static _getAllowedSObjectsUpdated(verbose) {
@@ -327,7 +327,7 @@ export class SalesforceClient {
     if (verbose) {
       return allowedSObjects;
     }
-    return allowedSObjects.map((i) => i.label);
+    return allowedSObjects.map((i) => i.name);
   }
 
   static _getAllowedSObjectsDeleted(verbose) {
@@ -335,7 +335,7 @@ export class SalesforceClient {
     if (verbose) {
       return allowedSObjects;
     }
-    return allowedSObjects.map((i) => i.label);
+    return allowedSObjects.map((i) => i.name);
   }
 
   static getAllowedSObjects(event, verbose = false) {
