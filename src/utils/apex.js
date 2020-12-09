@@ -41,6 +41,7 @@ export const getWebhookTrigger = (
   template,
   endpointUrl,
   sObjectType,
+  associateParentEntity,
   webhookCallout,
 ) => {
   const { name: webhookCalloutName } = webhookCallout;
@@ -49,6 +50,7 @@ export const getWebhookTrigger = (
     triggerName,
     endpointUrl,
     sObjectType,
+    associateParentEntity,
     webhookCalloutName,
   });
   return {

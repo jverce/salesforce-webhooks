@@ -2,15 +2,23 @@
 public class {{testClassName}} {
     @isTest
     static void testBatch() {
+        Test.enableChangeDataCapture();
+
         Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
         List<{{sObjectType}}> a =
-            (List<{{sObjectType}}>) {{sObjectFactoryName}}.createSObjectList('{{sObjectType}}', true, 32);
+            (List<{{sObjectType}}>) {{sObjectFactoryName}}.createSObjectList('{{sObjectType}}', true, 4);
         insert a;
+
+        Test.getEventBus().deliver();
     }
     @isTest
     static void testSingle() {
+        Test.enableChangeDataCapture();
+
         Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
         {{sObjectType}} a = ({{sObjectType}}) {{sObjectFactoryName}}.createSObject('{{sObjectType}}', true);
         insert a;
+
+        Test.getEventBus().deliver();
     }
 }

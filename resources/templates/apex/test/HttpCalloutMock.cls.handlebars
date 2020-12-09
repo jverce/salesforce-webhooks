@@ -7,7 +7,6 @@ global class {{webhookCalloutMockName}} implements HttpCalloutMock {
     }
 
     global HTTPResponse respond(HTTPRequest req) {
-        System.assertEquals(this.endpointUrl, req.getEndpoint());
         System.assertEquals('POST', req.getMethod());
 
         HttpResponse res = new HttpResponse();
