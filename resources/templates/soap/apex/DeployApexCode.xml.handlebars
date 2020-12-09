@@ -15,6 +15,10 @@
                 {{#each triggerBodies}}
                 <triggers>{{this}}</triggers>
                 {{/each}}
+
+                <runTestsRequest>
+                    <allTests>true</allTests>
+                </runTestsRequest>
             </CompileAndTestRequest>
         </compileAndTest>
     </env:Body>

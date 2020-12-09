@@ -32,6 +32,9 @@ public with sharing class {{name}} {
     private static final Map<String, Schema.SObjectType> GlobalDescribe =
         Schema.getGlobalDescribe();
 
+    private static final Map<String, SObject> SObjectCache =
+        new Map<String, SObject>();
+
     // Default Country and State
     // When Country and State Picklists are enabled, cannot dynamically resolve which States are within a Country
     public static string DefaultCountry = 'United States';
@@ -69,7 +72,11 @@ public with sharing class {{name}} {
     };
 
     // include nillable fields
-    public static Map<String, Set<String>> IncludedFields = new Map<String, Set<String>>();
+    public static Map<String, Set<String>> IncludedFields = new Map<String, Set<String>> {
+        'ContentVersion' => new Set<String> {
+            'ContentUrl'
+        }
+    };
 
     public static SObject createSObject(String objectType) {
         return createSObject(objectType, false);
@@ -91,23 +98,84 @@ public with sharing class {{name}} {
     ) {
         List<SObject> sos = new List<SObject>();
         for( Integer i = 0; i < numberOfObjects; i++ ) {
+            SObjectCache.clear();
             Integer counter = i + initialCounter;
             sos.add(createSObject(objectType, cascade, counter));
         }
         return sos;
     }
 
-    public static SObject createSObject(String objectType, Boolean cascade, Integer counter) {
-        System.debug('Creating ' + objectType);
-        Schema.sObjectType token = GlobalDescribe.get(objectType);
+    private static SObject newInstance(String objectType) {
+        final Schema.sObjectType token = GlobalDescribe.get(objectType);
         if (token == null) {
             throw new IllegalArgumentException('Unsupported ObjectType ' + objectType);
+        } else if (!token.getDescribe().isCreateable()) {
+            System.debug(String.format(
+                'Type "{0}" is not createable, setting to "null"',
+                new List<String> {
+                    objectType
+                }
+            ));
+            return null;
+        }
+        return token.newSObject();
+    }
+
+    private static SObject getSObjectFromCache(String objectType, Boolean isRoot) {
+        if (!SObjectCache.containsKey(objectType)) {
+            final SObject obj = newInstance(objectType);
+            SObjectCache.put(objectType, obj);
+            return obj;
         }
 
-        SObject obj = token.newSObject();
+        System.debug(String.format(
+            'Retrieving cached instance of type {0}',
+            new List<String> {
+                objectType
+            }
+        ));
+
+        final SObject obj = SObjectCache.get(objectType);
+        if (obj != null && obj.Id == null && !isRoot) {
+            System.debug(String.format(
+                'Persisting cached object of type "{0}" since ' +
+                'it\'s only in memory and doesn\'t have an ID yet',
+                new List<String> {
+                    objectType
+                }
+            ));
+            insert obj;
+            SObjectCache.put(objectType, obj);
+        }
+
+        return obj;
+    }
+
+    public static SObject createSObject(String objectType, Boolean cascade, Integer counter) {
+        return createSObject(objectType, cascade, counter, true);
+    }
+
+    public static SObject createSObject(
+        String objectType,
+        Boolean cascade,
+        Integer counter,
+        Boolean isRoot
+    ) {
+        final SObject obj = getSObjectFromCache(objectType, isRoot);
+        if (obj == null || obj.Id != null) {
+            return obj;
+        }
+
         for (Schema.SObjectField field : fieldMapFor(objectType).values()) {
             setFieldValue(obj, field, cascade, counter);
         }
+
+        if (obj.Id == null && !isRoot) {
+            System.debug('Inserting child node ' + obj);
+            insert obj;
+        }
+
+        SObjectCache.put(objectType, obj);
         return obj;
     }
 
@@ -188,17 +256,26 @@ public with sharing class {{name}} {
         Boolean cascade
     ) {
         return (
-            fieldDescribe.isCreateable() &&
-            !fieldDescribe.isDefaultedOnCreate() &&
+            fieldDescribe.getName() == 'IsActive' ||
             (
-                isIncludedField(obj, fieldDescribe) || (
+                fieldDescribe.isCreateable() &&
+                !fieldDescribe.isDefaultedOnCreate() &&
+                (
+                    isIncludedField(obj, fieldDescribe) ||
                     (
-                        (!fieldDescribe.isNillable() || FillAllFields) ||
-                        (fieldDescribe.getType() == Schema.DisplayType.Reference && cascade) // always fill references with cascade
-                    ) &&
-                    !isExcludedField(fieldDescribe) &&
-                    !isExcludedField(obj, fieldDescribe) &&
-                    !isPersonAccountField(fieldDescribe)
+                        (
+                            FillAllFields ||
+                            !fieldDescribe.isNillable() ||
+                            (
+                                // Always fill references with cascade if they are not nillable
+                                cascade &&
+                                fieldDescribe.getType() == Schema.DisplayType.Reference
+                            )
+                        ) &&
+                        !isExcludedField(fieldDescribe) &&
+                        !isExcludedField(obj, fieldDescribe) &&
+                        !isPersonAccountField(fieldDescribe)
+                    )
                 )
             )
         );
@@ -212,7 +289,11 @@ public with sharing class {{name}} {
     ) {
         Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
         if (shouldIncludeField(fieldDescribe, obj, cascade)) {
-            if (fieldDescribe.getName().endsWith('Country')) {
+            if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
+                // Picklist goes first, since we potential values are ready to be grabbed,
+                // and we can't really use any other value anyways.
+                obj.put(field, getDefaultPicklistValue(obj, fieldDescribe));
+            } else if (fieldDescribe.getName().endsWith('Country')) {
                 obj.put(field, DefaultCountry);
             } else if (fieldDescribe.getName().endsWith('State')) {
                 obj.put(field, DefaultState);
@@ -220,8 +301,19 @@ public with sharing class {{name}} {
                 obj.put(field, DefaultCountryCode);
             } else if (fieldDescribe.getName().endsWith('StateCode')) {
                 obj.put(field, DefaultStateCode);
+            } else if (
+                fieldDescribe.getType() == Schema.DisplayType.URL ||
+                fieldDescribe.getName().endsWith('Url')
+            ) {
+                String value = String.format(
+                    'http://test{0}.com',
+                    new List<String> {
+                        counter.format()
+                    }
+                );
+                obj.put(field, value);
             } else if (fieldDescribe.getType() == Schema.DisplayType.base64) {
-                Integer randomComponent = (Integer) (Math.random() * 1000000);
+                Integer randomComponent = (Integer) (Math.random() * 1000);
                 String value = String.format(
                     '{0}-{1}',
                     new List<String> {
@@ -242,11 +334,17 @@ public with sharing class {{name}} {
                 obj.put(field, DateTime.now());
             } else if (fieldDescribe.getType() == Schema.DisplayType.Double) {
                 obj.put(field, counter);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Email) {
+            } else if (
+                fieldDescribe.getName() == 'Username' ||
+                fieldDescribe.getType() == Schema.DisplayType.Email
+            ) {
+                Long randomComponent = Math.roundToLong(Math.random() * 1000);
+                String dateComponent = String.valueOf(Datetime.now().getTime());
                 String value = String.format(
-                    'test{0}@test.com',
+                    'test{0}{1}@test.com',
                     new List<String> {
-                        counter.format()
+                        randomComponent.format(),
+                        dateComponent
                     }
                 );
                 obj.put(field, value);
@@ -255,7 +353,7 @@ public with sharing class {{name}} {
             } else if (fieldDescribe.getType() == Schema.DisplayType.Id) {
                 // Ignore, we don't specify ID's when creating objects.
             } else if (fieldDescribe.getType() == Schema.DisplayType.Integer) {
-                Integer value = (Integer) (Math.random() * 1000000);
+                Integer value = (Integer) (Math.random() * 30);
                 obj.put(field, value);
             } else if (fieldDescribe.getType() == Schema.DisplayType.MultiPicklist) {
                 obj.put(field, getDefaultPicklistValue(obj, fieldDescribe));
@@ -263,13 +361,11 @@ public with sharing class {{name}} {
                 obj.put(field, counter);
             } else if (fieldDescribe.getType() == Schema.DisplayType.Phone) {
                 obj.put(field, '123-456-7890');
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
-                obj.put(field, getDefaultPicklistValue(obj, fieldDescribe));
             } else if (
                 fieldDescribe.getName() == 'CommunityNickname' &&
                 fieldDescribe.getType() == Schema.DisplayType.String
             ) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000000);
+                Long randomComponent = Math.roundToLong(Math.random() * 1000);
                 String value = String.format(
                     'test{0}',
                     new List<String> {
@@ -277,29 +373,11 @@ public with sharing class {{name}} {
                     }
                 );
                 obj.put(field, value);
-            } else if (
-                fieldDescribe.getName() == 'UserName' &&
-                fieldDescribe.getType() == Schema.DisplayType.String
-            ) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000000);
-                String dateComponent = Datetime.now().format()
-                    .replace('-', '')
-                    .replace(':', '')
-                    .replace(' ', '');
-                String value = String.format(
-                    'test{0}{1}{2}@test.com',
-                    new List<String> {
-                        Userinfo.getOrganizationId(),
-                        randomComponent.format(),
-                        dateComponent
-                    }
-                );
-                obj.put(field, value);
             } else if (fieldDescribe.getType() == Schema.DisplayType.String) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000000);
+                Long randomComponent = Math.roundToLong(Math.random() * 1000);
                 Integer maxLength = fieldDescribe.getLength();
                 String preliminaryValue = String.format(
-                    '{0}-{1}',
+                    'a{0}{1}',
                     new List<String> {
                         counter.format(),
                         randomComponent.format()
@@ -318,9 +396,8 @@ public with sharing class {{name}} {
                 } else if (
                     cascade &&
                     referenceObjectType != obj.getSObjectType().getDescribe().getName() &&
-                    referenceObjectType !='BusinessHours'
+                    referenceObjectType != 'BusinessHours'
                 ) {
-                    // TODO avoid infinite loop for same-type references
                     System.debug(
                         String.format(
                             'Creating reference to {0} for field {1}.{2}',
@@ -331,23 +408,19 @@ public with sharing class {{name}} {
                             }
                         )
                     );
-                    SObject reference = createSObject(referenceObjectType, cascade, counter + 1);
-                    System.debug('Inserting ' + reference);
-                    insert reference;
+                    SObject reference = createSObject(referenceObjectType, cascade, counter + 1, false);
+                    if (reference == null) {
+                        System.debug('Skipping instance of type ' + referenceObjectType);
+                        obj.put(field, null);
+                        return;
+                    }
+
                     obj.put(field, reference.Id);
                 }
             } else if (fieldDescribe.getType() == Schema.DisplayType.TextArea) {
                 obj.put(field, counter.format());
             } else if (fieldDescribe.getType() == Schema.DisplayType.Time) {
                 obj.put(field, Time.newInstance(0, 0, 0, 0));
-            } else if (fieldDescribe.getType() == Schema.DisplayType.URL) {
-                String value = String.format(
-                    'http://test{0}.com',
-                    new List<String> {
-                        counter.format()
-                    }
-                );
-                obj.put(field, value);
             } else {
                 System.debug('Unhandled field type ' + fieldDescribe.getType());
             }

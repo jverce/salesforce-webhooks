@@ -1,0 +1,5 @@
+{
+  "require": ["esm", "handlebars-loader"],
+  "spec": "test/unit/**/*.test.js",
+  "timeout": 10000
+}

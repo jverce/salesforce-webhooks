@@ -1,6 +1,6 @@
 'use strict';
 
-import Axios, { post } from 'axios';
+import axios from 'axios';
 
 import {
   getDeleteApexCodeBody,
@@ -17,7 +17,6 @@ import {
 } from './utils/metadata';
 
 export class SalesforceClient {
-
   /**
    * Creates an instance of this class with the provided parameters.
    *
@@ -40,6 +39,7 @@ export class SalesforceClient {
     this.authToken = authToken;
     this.metadataApiUrl = `https://${instance}.salesforce.com/services/Soap/m/${apiVersion}`;
     this.soapApiUrl = `https://${instance}.salesforce.com/services/Soap/s/${apiVersion}`;
+    this.sObjectsApiUrl = `https://${instance}.salesforce.com/services/data/v${apiVersion}/sobjects`;
   }
 
   _validateConstructorOpts(apiVersion, authToken, instance) {
@@ -56,6 +56,16 @@ export class SalesforceClient {
     }
   }
 
+  async _getSObjectDescription(sObjectType) {
+    const url = `${this.sObjectsApiUrl}/${sObjectType}/describe`;
+    const headers = this._baseHeaders();
+    const requestConfig = {
+      headers,
+    };
+    const { data } = await axios.get(url, requestConfig);
+    return data;
+  }
+
   _getCommonApexComponents(secretToken) {
     const sObjectFactory = getSObjectFactory();
     const webhookCallout = getWebhookCallout(secretToken);
@@ -67,9 +77,10 @@ export class SalesforceClient {
     };
   }
 
-  _getApexComponents(
+  async _getApexComponents(
     endpointUrl,
     sObjectType,
+    associateParentEntity,
     secretToken,
     triggerTemplate,
     triggerTestTemplate,
@@ -79,16 +90,22 @@ export class SalesforceClient {
       webhookCallout,
       webhookCalloutMock,
     } = this._getCommonApexComponents(secretToken);
+
     const webhookTrigger = getWebhookTrigger(
       triggerTemplate,
       endpointUrl,
       sObjectType,
+      associateParentEntity,
       webhookCallout,
     );
+
+    const sObjectUnderTest = associateParentEntity
+      ? associateParentEntity
+      : sObjectType;
     const webhookTriggerTest = getWebhookTriggerTest(
       triggerTestTemplate,
       endpointUrl,
-      sObjectType,
+      sObjectUnderTest,
       sObjectFactory,
       webhookCalloutMock,
     );
@@ -98,9 +115,7 @@ export class SalesforceClient {
       webhookCalloutMock,
       webhookTriggerTest,
     ];
-    const triggers = [
-      webhookTrigger,
-    ];
+    const triggers = [webhookTrigger];
     return {
       classes,
       triggers,
@@ -109,7 +124,7 @@ export class SalesforceClient {
 
   _baseHeaders() {
     return {
-      'Authorization': `Bearer ${this.authToken}`,
+      Authorization: `Bearer ${this.authToken}`,
       'Content-Type': 'text/xml',
     };
   }
@@ -118,7 +133,7 @@ export class SalesforceClient {
     const { body } = getDeployApexCodeBody(this.authToken, classes, triggers);
     const headers = {
       ...this._baseHeaders(),
-      'SOAPAction': 'compileAndTest',
+      SOAPAction: 'compileAndTest',
     };
     return {
       body,
@@ -128,23 +143,20 @@ export class SalesforceClient {
 
   async _createRemoteSiteSetting(opts) {
     const { endpointUrl } = opts;
-    const {
-      body,
-      name,
-    } = getCreateRemoteSiteBody(this.authToken, endpointUrl);
+    const { body, name } = getCreateRemoteSiteBody(this.authToken, endpointUrl);
     const headers = {
       ...this._baseHeaders(),
-      'SOAPAction': 'remoteSiteSetting',
+      SOAPAction: 'remoteSiteSetting',
     };
     const requestConfig = {
       headers,
     };
     try {
-      await post(this.metadataApiUrl, body, requestConfig);
+      await axios.post(this.metadataApiUrl, body, requestConfig);
       return {
         remoteSiteName: name,
       };
-    } catch(error) {
+    } catch (error) {
       console.error(`
         Could not setup remote site in Salesforce.
         - Error message: ${error}
@@ -154,45 +166,37 @@ export class SalesforceClient {
     }
   }
 
-  async _deployWebhook(
-    triggerTemplate,
-    triggerTestTemplate,
-    opts,
-  ) {
+  async _deployWebhook(triggerTemplate, triggerTestTemplate, opts) {
     const {
       endpointUrl,
       sObjectType,
+      associateParentEntity,
       secretToken = '',
     } = opts;
 
-    const apexComponents = this._getApexComponents(
+    const apexComponents = await this._getApexComponents(
       endpointUrl,
       sObjectType,
+      associateParentEntity,
       secretToken,
       triggerTemplate,
       triggerTestTemplate,
     );
 
-    const {
-      classes,
-      triggers,
-    } = apexComponents;
-    const classNames = classes.map(c => c.name);
-    const triggerNames = triggers.map(t => t.name);
-    const {
-      body,
-      headers,
-    } = this._getDeployApexCodeRequest(classes, triggers);
+    const { classes, triggers } = apexComponents;
+    const classNames = classes.map((c) => c.name);
+    const triggerNames = triggers.map((t) => t.name);
+    const { body, headers } = this._getDeployApexCodeRequest(classes, triggers);
     const requestConfig = {
       headers,
     };
     try {
-      await post(this.soapApiUrl, body, requestConfig);
+      await axios.post(this.soapApiUrl, body, requestConfig);
       return {
         classNames,
         triggerNames,
       };
-    } catch(error) {
+    } catch (error) {
       console.error(`
         Could not deploy Apex code to Salesforce.
         - Error message: ${error}
@@ -203,16 +207,9 @@ export class SalesforceClient {
     }
   }
 
-  async _createWebhookWorkflow(
-    triggerTemplate,
-    triggerTestTemplate,
-    opts,
-  ) {
+  async _createWebhookWorkflow(triggerTemplate, triggerTestTemplate, opts) {
     const { remoteSiteName } = await this._createRemoteSiteSetting(opts);
-    const {
-      classNames,
-      triggerNames,
-    } = await this._deployWebhook(
+    const { classNames, triggerNames } = await this._deployWebhook(
       triggerTemplate,
       triggerTestTemplate,
       opts,
@@ -225,10 +222,14 @@ export class SalesforceClient {
   }
 
   _getDeleteApexCodeRequest(classNames, triggerNames) {
-    const { body } = getDeleteApexCodeBody(this.authToken, classNames, triggerNames);
+    const { body } = getDeleteApexCodeBody(
+      this.authToken,
+      classNames,
+      triggerNames,
+    );
     const headers = {
       ...this._baseHeaders(),
-      'SOAPAction': 'compileAndTest',
+      SOAPAction: 'compileAndTest',
     };
     return {
       body,
@@ -237,15 +238,15 @@ export class SalesforceClient {
   }
 
   async _deleteApexCode(classNames, triggerNames) {
-    const {
-      body,
-      headers,
-    } = this._getDeleteApexCodeRequest(classNames, triggerNames);
+    const { body, headers } = this._getDeleteApexCodeRequest(
+      classNames,
+      triggerNames,
+    );
     const requestConfig = {
       headers,
     };
     try {
-      await post(this.soapApiUrl, body, requestConfig);
+      await axios.post(this.soapApiUrl, body, requestConfig);
     } catch (error) {
       console.error(`
         Could not delete Apex code from Salesforce.
@@ -261,7 +262,7 @@ export class SalesforceClient {
     const { body } = getDeleteRemoteSiteBody(this.authToken, remoteSiteName);
     const headers = {
       ...this._baseHeaders(),
-      'SOAPAction': 'remoteSiteSetting',
+      SOAPAction: 'remoteSiteSetting',
     };
     return {
       body,
@@ -270,16 +271,15 @@ export class SalesforceClient {
   }
 
   async _deleteRemoteSiteSetting(remoteSiteName) {
-    const {
-      body,
-      headers,
-    } = this._getDeleteRemoteSiteSettingRequest(remoteSiteName);
+    const { body, headers } = this._getDeleteRemoteSiteSettingRequest(
+      remoteSiteName,
+    );
     const requestConfig = {
       headers,
     };
     try {
-      await post(this.metadataApiUrl, body, requestConfig);
-    } catch(error) {
+      await axios.post(this.metadataApiUrl, body, requestConfig);
+    } catch (error) {
       console.error(`
         Could not delete remote site setting from Salesforce.
         - Error message: ${error}
@@ -289,25 +289,49 @@ export class SalesforceClient {
     }
   }
 
-  async _deleteWebhookWorkflow(
-    remoteSiteName,
-    classNames,
-    triggerNames,
-  ) {
+  async _deleteWebhookWorkflow(remoteSiteName, classNames, triggerNames) {
     await this._deleteApexCode(classNames, triggerNames);
     await this._deleteRemoteSiteSetting(remoteSiteName);
   }
 
-  _validateCreateWebhookOpts({
-    endpointUrl,
-    sObjectType,
-  }) {
+  _validateCreateWebhookOpts({ endpointUrl, event, sObjectType }) {
     if (!endpointUrl) {
-      throw new Error('Parameter "endpointUrl" is required.')
+      throw new Error('Parameter "endpointUrl" is required.');
     }
     if (!sObjectType) {
-      throw new Error('Parameter "sObjectType" is required.')
+      throw new Error('Parameter "sObjectType" is required.');
     }
+    const allowedSObjectTypes = SalesforceClient.getAllowedSObjects(event);
+    if (!allowedSObjectTypes.includes(sObjectType)) {
+      throw new Error(
+        `${sObjectType} is not supported for events of type "${event}".`,
+      );
+    }
+  }
+
+  static _getAllowedSObjectsNew() {
+    const basicSObjects = require('../resources/data/sobjects-new.json');
+    const changeEvents = require('../resources/data/sobjects-new-change-event.json');
+    return [...basicSObjects, ...changeEvents].sort();
+  }
+
+  static _getAllowedSObjectsUpdated() {
+    return require('../resources/data/sobjects-updated.json');
+  }
+
+  static _getAllowedSObjectsDeleted() {
+    return require('../resources/data/sobjects-deleted.json');
+  }
+
+  static getAllowedSObjects(event) {
+    if (event === 'new') {
+      return this._getAllowedSObjectsNew();
+    } else if (event === 'updated') {
+      return this._getAllowedSObjectsUpdated();
+    } else if (event === 'deleted') {
+      return this._getAllowedSObjectsDeleted();
+    }
+    return [];
   }
 
   /**
@@ -329,8 +353,27 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookNew(opts) {
-    this._validateCreateWebhookOpts(opts);
-    const triggerTemplate = require('../resources/templates/apex/src/NewSObject.trigger.handlebars');
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: 'new',
+    });
+
+    // Change events should be treated differently as they are special objects
+    // that get triggered asynchronously whenever their associated entity is
+    // mutated. See
+    // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
+    const sObjectDescription = await this._getSObjectDescription(
+      opts.sObjectType,
+    );
+
+    let triggerTemplate;
+    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+      opts.associateParentEntity = sObjectDescription.associateParentEntity;
+      triggerTemplate = require('../resources/templates/apex/src/NewChangeEvent.trigger.handlebars');
+    } else {
+      triggerTemplate = require('../resources/templates/apex/src/NewSObject.trigger.handlebars');
+    }
+
     const triggerTestTemplate = require('../resources/templates/apex/test/NewSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
       triggerTemplate,
@@ -338,7 +381,6 @@ export class SalesforceClient {
       opts,
     );
   }
-
 
   /**
    * Create a new webhook in a Salesforce org that gets triggered whenever an
@@ -359,7 +401,22 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookUpdated(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: 'updated',
+    });
+
+    // Change events should be treated differently as they are special objects
+    // that get triggered asynchronously whenever their associated entity is
+    // mutated. The **DO NOT SUPPORT** events other than `after insert`. See
+    // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
+    const sObjectDescription = await this._getSObjectDescription(
+      opts.sObjectType,
+    );
+    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+      throw new Error(`${sObjectType} does not support "updated" events`);
+    }
+
     const triggerTemplate = require('../resources/templates/apex/src/UpdatedSObject.trigger.handlebars');
     const triggerTestTemplate = require('../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
@@ -388,7 +445,22 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookDeleted(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: 'deleted',
+    });
+
+    // Change events should be treated differently as they are special objects
+    // that get triggered asynchronously whenever their associated entity is
+    // mutated. The **DO NOT SUPPORT** events other than `after insert`. See
+    // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
+    const sObjectDescription = await this._getSObjectDescription(
+      opts.sObjectType,
+    );
+    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+      throw new Error(`${sObjectType} does not support "deleted" events`);
+    }
+
     const triggerTemplate = require('../resources/templates/apex/src/DeletedSObject.trigger.handlebars');
     const triggerTestTemplate = require('../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars');
     return this._createWebhookWorkflow(
@@ -463,11 +535,7 @@ export class SalesforceClient {
    * @param {string[]} opts.triggerNames the names of the webhook triggers
    */
   async deleteWebhook(opts) {
-    const {
-      remoteSiteName,
-      classNames,
-      triggerNames,
-    } = opts;
+    const { remoteSiteName, classNames, triggerNames } = opts;
     this._validateDeleteWebhookOpts(remoteSiteName, classNames, triggerNames);
     return this._deleteWebhookWorkflow(
       remoteSiteName,
@@ -475,5 +543,4 @@ export class SalesforceClient {
       triggerNames,
     );
   }
-
 }
