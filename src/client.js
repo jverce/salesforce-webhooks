@@ -309,27 +309,42 @@ export class SalesforceClient {
     }
   }
 
-  static _getAllowedSObjectsNew() {
+  static _getAllowedSObjectsNew(verbose) {
     const basicSObjects = require('../resources/data/sobjects-new.json');
     const changeEvents = require('../resources/data/sobjects-new-change-event.json');
-    return [...basicSObjects, ...changeEvents].sort();
+    if (verbose) {
+      return [...basicSObjects, ...changeEvents].sort((a, b) => {
+        if (a.label < b.label) return -1;
+        if (a.label > b.label) return 1;
+        return 0;
+      });
+    }
+    return [...basicSObjects, ...changeEvents].map((i) => i.label).sort();
   }
 
-  static _getAllowedSObjectsUpdated() {
-    return require('../resources/data/sobjects-updated.json');
+  static _getAllowedSObjectsUpdated(verbose) {
+    const allowedSObjects = require('../resources/data/sobjects-updated.json');
+    if (verbose) {
+      return allowedSObjects;
+    }
+    return allowedSObjects.map((i) => i.label);
   }
 
-  static _getAllowedSObjectsDeleted() {
-    return require('../resources/data/sobjects-deleted.json');
+  static _getAllowedSObjectsDeleted(verbose) {
+    const allowedSObjects = require('../resources/data/sobjects-deleted.json');
+    if (verbose) {
+      return allowedSObjects;
+    }
+    return allowedSObjects.map((i) => i.label);
   }
 
-  static getAllowedSObjects(event) {
+  static getAllowedSObjects(event, verbose = false) {
     if (event === 'new') {
-      return this._getAllowedSObjectsNew();
+      return this._getAllowedSObjectsNew(verbose);
     } else if (event === 'updated') {
-      return this._getAllowedSObjectsUpdated();
+      return this._getAllowedSObjectsUpdated(verbose);
     } else if (event === 'deleted') {
-      return this._getAllowedSObjectsDeleted();
+      return this._getAllowedSObjectsDeleted(verbose);
     }
     return [];
   }
