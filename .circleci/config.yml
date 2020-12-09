@@ -5,23 +5,19 @@ general:
     only:
       - dev
       - master
-      - /feature\/.*/
-      - /fix\/.*/
 
-defaults:
+defaults: &defaults
   working_directory: ~/repo
   docker:
     - image: circleci/node:lts-buster
 
 jobs:
-  build:
-    working_directory: ~/repo
-    docker:
-      - image: circleci/node:lts-buster
+  build_and_test:
+    <<: *defaults
 
     environment:
-      - KEYS_DIR: '/tmp/keys'
-      - DX_CLI_URL: 'https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz'
+      KEYS_DIR: '/tmp/keys'
+      DX_CLI_URL: 'https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz'
 
     steps:
       - checkout
@@ -102,8 +98,8 @@ jobs:
           working_directory: test/integ
           no_output_timeout: 270m
           environment:
-            - SALESFORCE_API_VERSION: '50.0'
-            - TEST_REPORTS_DIR_BASE: test_reports
+            SALESFORCE_API_VERSION: '50.0'
+            TEST_REPORTS_DIR_BASE: test_reports
           command: |
             sfdx config:set defaultusername=${HUB_SFDC_USER}
             ./deploy_and_test_apex.sh
@@ -112,8 +108,48 @@ jobs:
           working_directory: test/integ
           path: test/integ/test_reports
 
-      # - run:
-      #     name: Publish NPM Package
-      #     command: |
-      #       echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/project/.npmrc
-      #       npm publish
+  publish:
+    <<: *defaults
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
+
+      - add_ssh_keys:
+          fingerprints:
+            - 'eb:79:6a:d5:94:92:0f:75:b8:29:75:8c:56:bd:4a:f2'
+
+      - run:
+          name: Update Package Version
+          command: |
+            npm version --no-git-tag-version version $CIRCLE_TAG -m "[skip ci] Update package version: %s"
+            git push origin master
+
+      - run:
+          name: Publish NPM Package
+          command: |
+            echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
+            npm publish
+
+workflows:
+  version: 2
+  ci-cd:
+    jobs:
+      - build_and_test:
+          filters:
+            branches:
+              only:
+                - dev
+                - master
+      - publish:
+          requires:
+            - build_and_test
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
