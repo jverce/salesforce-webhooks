@@ -341,3 +341,15 @@ describe('Salesforce webhook deletion', function () {
     sinon.assert.callCount(postStub, 2);
   });
 });
+
+describe('Salesforce misc methods', function () {
+  it('should return verbose information about allowed SObject types', function () {
+    const event = 'new';
+    const verbose = true;
+
+    const result = SalesforceClient.getAllowedSObjects(event, verbose);
+
+    expect(result[0]).to.be.haveOwnProperty('label');
+    expect(result[0]).to.be.haveOwnProperty('name');
+  });
+});

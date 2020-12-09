@@ -1,49 +1,190 @@
 [
-  "Account",
-  "Asset",
-  "Attachment",
-  "AuthorizationFormDataUse",
-  "Campaign",
-  "CampaignMember",
-  "CommSubscription",
-  "CommSubscriptionChannelType",
-  "CommSubscriptionConsent",
-  "CommSubscriptionTiming",
-  "Contact",
-  "ContactPointAddress",
-  "ContactPointConsent",
-  "ContactPointEmail",
-  "ContactPointPhone",
-  "ContactPointTypeConsent",
-  "ContactRequest",
-  "ContentVersion",
-  "Contract",
-  "DandBCompany",
-  "DataUseLegalBasis",
-  "DataUsePurpose",
-  "EngagementChannelType",
-  "Individual",
-  "Lead",
-  "Macro",
-  "Note",
-  "OperatingHours",
-  "Opportunity",
-  "OpportunityContactRole",
-  "Order",
-  "OrgDeleteRequest",
-  "PartyConsent",
-  "Pricebook2",
-  "Product2",
-  "QuickText",
-  "ServiceAppointment",
-  "ServiceTerritory",
-  "ServiceTerritoryWorkType",
-  "SetupAssistantStep",
-  "Solution",
-  "Task",
-  "TimeSlot",
-  "Topic",
-  "User",
-  "UserProvMockTarget",
-  "WorkTypeGroup"
+  {
+    "label": "Account",
+    "name": "Account"
+  },
+  {
+    "label": "Asset",
+    "name": "Asset"
+  },
+  {
+    "label": "Attachment",
+    "name": "Attachment"
+  },
+  {
+    "label": "Authorization Form Data Use",
+    "name": "AuthorizationFormDataUse"
+  },
+  {
+    "label": "Campaign",
+    "name": "Campaign"
+  },
+  {
+    "label": "Campaign Member",
+    "name": "CampaignMember"
+  },
+  {
+    "label": "Communication Subscription",
+    "name": "CommSubscription"
+  },
+  {
+    "label": "Communication Subscription Channel Type",
+    "name": "CommSubscriptionChannelType"
+  },
+  {
+    "label": "Communication Subscription Consent",
+    "name": "CommSubscriptionConsent"
+  },
+  {
+    "label": "Communication Subscription Timing",
+    "name": "CommSubscriptionTiming"
+  },
+  {
+    "label": "Contact",
+    "name": "Contact"
+  },
+  {
+    "label": "Contact Point Address",
+    "name": "ContactPointAddress"
+  },
+  {
+    "label": "Contact Point Consent",
+    "name": "ContactPointConsent"
+  },
+  {
+    "label": "Contact Point Email",
+    "name": "ContactPointEmail"
+  },
+  {
+    "label": "Contact Point Phone",
+    "name": "ContactPointPhone"
+  },
+  {
+    "label": "Contact Point Type Consent",
+    "name": "ContactPointTypeConsent"
+  },
+  {
+    "label": "Contact Request",
+    "name": "ContactRequest"
+  },
+  {
+    "label": "Content Version",
+    "name": "ContentVersion"
+  },
+  {
+    "label": "Contract",
+    "name": "Contract"
+  },
+  {
+    "label": "D&B Company",
+    "name": "DandBCompany"
+  },
+  {
+    "label": "Data Use Legal Basis",
+    "name": "DataUseLegalBasis"
+  },
+  {
+    "label": "Data Use Purpose",
+    "name": "DataUsePurpose"
+  },
+  {
+    "label": "Engagement Channel Type",
+    "name": "EngagementChannelType"
+  },
+  {
+    "label": "Individual",
+    "name": "Individual"
+  },
+  {
+    "label": "Lead",
+    "name": "Lead"
+  },
+  {
+    "label": "Macro",
+    "name": "Macro"
+  },
+  {
+    "label": "Note",
+    "name": "Note"
+  },
+  {
+    "label": "Operating Hours",
+    "name": "OperatingHours"
+  },
+  {
+    "label": "Opportunity",
+    "name": "Opportunity"
+  },
+  {
+    "label": "Opportunity Contact Role",
+    "name": "OpportunityContactRole"
+  },
+  {
+    "label": "Order",
+    "name": "Order"
+  },
+  {
+    "label": "Org Delete Request",
+    "name": "OrgDeleteRequest"
+  },
+  {
+    "label": "Party Consent",
+    "name": "PartyConsent"
+  },
+  {
+    "label": "Price Book",
+    "name": "Pricebook2"
+  },
+  {
+    "label": "Product",
+    "name": "Product2"
+  },
+  {
+    "label": "Quick Text",
+    "name": "QuickText"
+  },
+  {
+    "label": "Service Appointment",
+    "name": "ServiceAppointment"
+  },
+  {
+    "label": "Service Territory",
+    "name": "ServiceTerritory"
+  },
+  {
+    "label": "Service Territory Work Type",
+    "name": "ServiceTerritoryWorkType"
+  },
+  {
+    "label": "Setup Assistant Step",
+    "name": "SetupAssistantStep"
+  },
+  {
+    "label": "Solution",
+    "name": "Solution"
+  },
+  {
+    "label": "Task",
+    "name": "Task"
+  },
+  {
+    "label": "Time Slot",
+    "name": "TimeSlot"
+  },
+  {
+    "label": "Topic",
+    "name": "Topic"
+  },
+  {
+    "label": "User",
+    "name": "User"
+  },
+  {
+    "label": "User Provisioning Mock Target",
+    "name": "UserProvMockTarget"
+  },
+  {
+    "label": "Work Type Group",
+    "name": "WorkTypeGroup"
+  }
 ]
