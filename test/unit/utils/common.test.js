@@ -22,3 +22,61 @@ describe('Random name generator', function () {
     expect(randomName.length).to.be.lte(40);
   });
 });
+
+describe('Soap request success detector', function () {
+  it('should be false if at least one item was not successful', function () {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns="http://soap.sforce.com/2006/04/metadata"
+      >
+        <soapenv:Body>
+          <createMetadataResponse>
+            <result>
+              <fullName>some_site_name1</fullName>
+              <success>true</success>
+            </result>
+            <result>
+              <fullName>some_site_name2</fullName>
+              <success>true</success>
+            </result>
+            <result>
+              <fullName>some_site_name3</fullName>
+              <success>false</success>
+            </result>
+          </createMetadataResponse>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+    const result = common.wasSuccessfulSoapRequest(xml);
+    expect(result).to.be.false;
+  });
+
+  it('should be true if every item was successful', function () {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns="http://soap.sforce.com/2006/04/metadata"
+      >
+        <soapenv:Body>
+          <createMetadataResponse>
+            <result>
+              <fullName>some_site_name1</fullName>
+              <success>true</success>
+            </result>
+            <result>
+              <fullName>some_site_name2</fullName>
+              <success>true</success>
+            </result>
+            <result>
+              <fullName>some_site_name3</fullName>
+              <success>true</success>
+            </result>
+          </createMetadataResponse>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+    const result = common.wasSuccessfulSoapRequest(xml);
+    expect(result).to.be.true;
+  });
+});

@@ -11,6 +11,7 @@ import {
   getWebhookTrigger,
   getWebhookTriggerTest,
 } from './utils/apex';
+import { wasSuccessfulSoapRequest } from './utils/common';
 import {
   getCreateRemoteSiteBody,
   getDeleteRemoteSiteBody,
@@ -151,11 +152,10 @@ export class SalesforceClient {
     const requestConfig = {
       headers,
     };
+
+    let result;
     try {
-      await axios.post(this.metadataApiUrl, body, requestConfig);
-      return {
-        remoteSiteName: name,
-      };
+      result = await axios.post(this.metadataApiUrl, body, requestConfig);
     } catch (error) {
       console.error(`
         Could not setup remote site in Salesforce.
@@ -164,6 +164,18 @@ export class SalesforceClient {
       `);
       throw new Error(`${error}`);
     }
+
+    const { data } = result;
+    if (!wasSuccessfulSoapRequest(data)) {
+      const error = {
+        error: 'Could not setup remote site in Salesforce',
+        data,
+      };
+      throw new Error(error);
+    }
+    return {
+      remoteSiteName: name,
+    };
   }
 
   async _deployWebhook(triggerTemplate, triggerTestTemplate, opts) {
@@ -190,12 +202,10 @@ export class SalesforceClient {
     const requestConfig = {
       headers,
     };
+
+    let result;
     try {
-      await axios.post(this.soapApiUrl, body, requestConfig);
-      return {
-        classNames,
-        triggerNames,
-      };
+      result = await axios.post(this.soapApiUrl, body, requestConfig);
     } catch (error) {
       console.error(`
         Could not deploy Apex code to Salesforce.
@@ -205,6 +215,19 @@ export class SalesforceClient {
       `);
       throw new Error(`${error}`);
     }
+
+    const { data } = result;
+    if (!wasSuccessfulSoapRequest(data)) {
+      const error = {
+        error: 'Could not deploy Apex code to Salesforce',
+        data,
+      };
+      throw new Error(error);
+    }
+    return {
+      classNames,
+      triggerNames,
+    };
   }
 
   async _createWebhookWorkflow(triggerTemplate, triggerTestTemplate, opts) {
