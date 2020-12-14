@@ -1,5 +1,4 @@
 import { randomBytes } from 'crypto';
-import { parseXmlString } from 'libxmljs';
 
 export const getRandomName = (rawName) => {
   const maxLength = 40;
@@ -12,9 +11,5 @@ export const getRandomName = (rawName) => {
 };
 
 export const wasSuccessfulSoapRequest = (responseBody) => {
-  const doc = parseXmlString(responseBody, { noblanks: true });
-  return !doc
-    .find('//*[local-name()="success"]')
-    .map((i) => i.text())
-    .some((i) => i == 'false');
+  return !/<success>false<\/success>/.test(responseBody);
 };
