@@ -1,7 +1,7 @@
 # Salesforce Webhooks
 
 [![jverce](https://circleci.com/gh/jverce/salesforce-webhooks.svg?style=shield)](https://app.circleci.com/pipelines/github/jverce/salesforce-webhooks)
-
+[![npm](https://img.shields.io/npm/v/salesforce-webhooks)](https://www.npmjs.com/package/salesforce-webhooks)
 
 ## Introduction
 
