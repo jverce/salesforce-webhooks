@@ -168,9 +168,11 @@ export class SalesforceClient {
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
       const error = {
-        error: 'Could not setup remote site in Salesforce',
+        msg: 'Could not setup remote site in Salesforce',
         data,
       };
+      console.error(msg);
+      console.error(data);
       throw new Error(error);
     }
     return {
@@ -219,9 +221,11 @@ export class SalesforceClient {
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
       const error = {
-        error: 'Could not deploy Apex code to Salesforce',
+        msg: 'Could not deploy Apex code to Salesforce',
         data,
       };
+      console.error(msg);
+      console.error(data);
       throw new Error(error);
     }
     return {
