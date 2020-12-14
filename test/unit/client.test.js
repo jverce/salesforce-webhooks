@@ -4,6 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { describe } from 'mocha';
 import sinon from 'sinon';
 import { SalesforceClient } from '../../src/client';
+import { remoteSiteSettings } from './data/soap-responses';
 
 chai.use(chaiAsPromised);
 
@@ -206,7 +207,9 @@ describe('Salesforce webhook creation', function () {
       .stub(axios, 'get')
       .withArgs(describeApiUrl, sinon.match.any)
       .resolves({ data: {} });
-    const postStub = sandbox.stub(axios, 'post');
+    const postStub = sandbox
+      .stub(axios, 'post')
+      .resolves({ data: remoteSiteSettings.success });
 
     await client.createWebhookNew(opts);
     await client.createWebhook({
@@ -230,7 +233,9 @@ describe('Salesforce webhook creation', function () {
       .stub(axios, 'get')
       .withArgs(describeApiUrl, sinon.match.any)
       .resolves({ data: {} });
-    const postStub = sandbox.stub(axios, 'post');
+    const postStub = sandbox
+      .stub(axios, 'post')
+      .resolves({ data: remoteSiteSettings.success });
 
     await client.createWebhookUpdated(opts);
     await client.createWebhook({
@@ -254,7 +259,9 @@ describe('Salesforce webhook creation', function () {
       .stub(axios, 'get')
       .withArgs(describeApiUrl, sinon.match.any)
       .resolves({ data: {} });
-    const postStub = sandbox.stub(axios, 'post');
+    const postStub = sandbox
+      .stub(axios, 'post')
+      .resolves({ data: remoteSiteSettings.success });
 
     await client.createWebhookDeleted(opts);
     await client.createWebhook({
@@ -288,6 +295,26 @@ describe('Salesforce webhook creation', function () {
     const postSpy = sandbox.spy(axios, 'post');
 
     await client.createWebhookNew(opts);
+  });
+
+  it('should fail if the SOAP request did not succeed', async function () {
+    const opts = {
+      sObjectType: 'Account',
+      endpointUrl: 'https://example.com',
+    };
+    const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
+    sandbox
+      .stub(axios, 'get')
+      .withArgs(describeApiUrl, sinon.match.any)
+      .resolves({ data: {} });
+    const postStub = sandbox
+      .stub(axios, 'post')
+      .resolves({ data: remoteSiteSettings.failure });
+
+    await expect(client.createWebhookNew(opts)).to.be.rejected;
+
+    // There should only be a single POST call, which is the one that failed
+    sinon.assert.callCount(postStub, 1);
   });
 });
 
@@ -331,7 +358,9 @@ describe('Salesforce webhook deletion', function () {
       triggerNames: ['MainTrigger'],
       remoteSiteName: 'SiteName',
     };
-    const postStub = sandbox.stub(axios, 'post');
+    const postStub = sandbox
+      .stub(axios, 'post')
+      .resolves({ data: remoteSiteSettings.success });
 
     await client.deleteWebhook(opts);
 
