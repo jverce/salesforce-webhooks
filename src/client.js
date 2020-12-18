@@ -162,7 +162,7 @@ export class SalesforceClient {
         - Error message: ${error}
         - Remote Site name: ${name}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
 
     const { data } = result;
@@ -215,7 +215,7 @@ export class SalesforceClient {
         - Classes: ${JSON.stringify(classNames, null, 2)}
         - Triggers: ${JSON.stringify(triggerNames, null, 2)}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
 
     const { data } = result;
@@ -281,7 +281,7 @@ export class SalesforceClient {
         - Classes: ${JSON.stringify(classNames, null, 2)}
         - Triggers: ${JSON.stringify(triggerNames, null, 2)}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
   }
 
@@ -312,7 +312,7 @@ export class SalesforceClient {
         - Error message: ${error}
         - Remote Site name: ${remoteSiteName}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
   }
 
