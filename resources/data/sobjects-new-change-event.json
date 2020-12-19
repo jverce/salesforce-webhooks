@@ -1,1 +1,114 @@
-[]
+[
+  {
+    "label": "Account Change Event",
+    "name": "AccountChangeEvent"
+  },
+  {
+    "label": "Account Contact Role Change Event",
+    "name": "AccountContactRoleChangeEvent"
+  },
+  {
+    "label": "Asset Change Event",
+    "name": "AssetChangeEvent"
+  },
+  {
+    "label": "Campaign Change Event",
+    "name": "CampaignChangeEvent"
+  },
+  {
+    "label": "Campaign Member Change Event",
+    "name": "CampaignMemberChangeEvent"
+  },
+  {
+    "label": "Campaign Member Status Change Event",
+    "name": "CampaignMemberStatusChangeEvent"
+  },
+  {
+    "label": "Communication Subscription Consent Change Event",
+    "name": "CommSubscriptionConsentChangeEvent"
+  },
+  {
+    "label": "Contact Change Event",
+    "name": "ContactChangeEvent"
+  },
+  {
+    "label": "Contact Point Address Change Event",
+    "name": "ContactPointAddressChangeEvent"
+  },
+  {
+    "label": "Contact Point Consent Change Event",
+    "name": "ContactPointConsentChangeEvent"
+  },
+  {
+    "label": "Contact Point Email Change Event",
+    "name": "ContactPointEmailChangeEvent"
+  },
+  {
+    "label": "Contact Point Phone Change Event",
+    "name": "ContactPointPhoneChangeEvent"
+  },
+  {
+    "label": "Contact Point Type Consent Change Event",
+    "name": "ContactPointTypeConsentChangeEvent"
+  },
+  {
+    "label": "Contract Change Event",
+    "name": "ContractChangeEvent"
+  },
+  {
+    "label": "Individual Change Event",
+    "name": "IndividualChangeEvent"
+  },
+  {
+    "label": "Lead Change Event",
+    "name": "LeadChangeEvent"
+  },
+  {
+    "label": "Macro Change Event",
+    "name": "MacroChangeEvent"
+  },
+  {
+    "label": "Opportunity Change Event",
+    "name": "OpportunityChangeEvent"
+  },
+  {
+    "label": "Opportunity Contact Role Change Event",
+    "name": "OpportunityContactRoleChangeEvent"
+  },
+  {
+    "label": "Party Consent Change Event",
+    "name": "PartyConsentChangeEvent"
+  },
+  {
+    "label": "Price Book Change Event",
+    "name": "Pricebook2ChangeEvent"
+  },
+  {
+    "label": "Product Change Event",
+    "name": "Product2ChangeEvent"
+  },
+  {
+    "label": "Quick Text Change Event",
+    "name": "QuickTextChangeEvent"
+  },
+  {
+    "label": "Service Appointment Change Event",
+    "name": "ServiceAppointmentChangeEvent"
+  },
+  {
+    "label": "Service Territory Change Event",
+    "name": "ServiceTerritoryChangeEvent"
+  },
+  {
+    "label": "Task Change Event",
+    "name": "TaskChangeEvent"
+  },
+  {
+    "label": "User Change Event",
+    "name": "UserChangeEvent"
+  },
+  {
+    "label": "Work Type Change Event",
+    "name": "WorkTypeChangeEvent"
+  }
+]
