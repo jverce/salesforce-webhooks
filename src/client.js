@@ -171,7 +171,7 @@ export class SalesforceClient {
         msg: 'Could not setup remote site in Salesforce',
         data,
       };
-      console.error(msg);
+      console.error(error.msg);
       console.error(data);
       throw new Error(error);
     }
@@ -224,7 +224,7 @@ export class SalesforceClient {
         msg: 'Could not deploy Apex code to Salesforce',
         data,
       };
-      console.error(msg);
+      console.error(error.msg);
       console.error(data);
       throw new Error(error);
     }
