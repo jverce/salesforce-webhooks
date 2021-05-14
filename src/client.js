@@ -173,7 +173,7 @@ export class SalesforceClient {
         msg,
       };
       console.error(msg);
-      console.error(data);
+      console.error(data.response);
       throw new Error(error);
     }
     return {
@@ -227,7 +227,7 @@ export class SalesforceClient {
         msg,
       };
       console.error(msg);
-      console.error(data);
+      console.error(data.response);
       throw new Error(error);
     }
     return {
