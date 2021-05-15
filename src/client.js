@@ -162,17 +162,18 @@ export class SalesforceClient {
         - Error message: ${error}
         - Remote Site name: ${name}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
 
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
+      const msg = 'Could not setup remote site in Salesforce';
       const error = {
-        msg: 'Could not setup remote site in Salesforce',
         data,
+        msg,
       };
       console.error(msg);
-      console.error(data);
+      console.error(data.response);
       throw new Error(error);
     }
     return {
@@ -215,17 +216,18 @@ export class SalesforceClient {
         - Classes: ${JSON.stringify(classNames, null, 2)}
         - Triggers: ${JSON.stringify(triggerNames, null, 2)}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
 
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
+      const msg = 'Could not deploy Apex code to Salesforce';
       const error = {
-        msg: 'Could not deploy Apex code to Salesforce',
         data,
+        msg,
       };
       console.error(msg);
-      console.error(data);
+      console.error(data.response);
       throw new Error(error);
     }
     return {
@@ -281,7 +283,7 @@ export class SalesforceClient {
         - Classes: ${JSON.stringify(classNames, null, 2)}
         - Triggers: ${JSON.stringify(triggerNames, null, 2)}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
   }
 
@@ -312,7 +314,7 @@ export class SalesforceClient {
         - Error message: ${error}
         - Remote Site name: ${remoteSiteName}
       `);
-      throw new Error(`${error}`);
+      throw error;
     }
   }
 

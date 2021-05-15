@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Abort the script if any of the commands below is not executed successfully
+set -e
+
 #
 # Change events
 #
