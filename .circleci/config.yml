@@ -129,6 +129,11 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
             npm publish
 
+non_master: &non_master
+  filters:
+    branches:
+      ignore: master
+
 master_only: &master_only
   filters:
     branches:
@@ -139,7 +144,7 @@ workflows:
   ci-cd:
     jobs:
       - build_and_test:
-          <<: *master_only
+          <<: *non_master
       - publish:
           filters:
             branches:
