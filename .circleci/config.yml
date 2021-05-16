@@ -1,11 +1,5 @@
 version: 2
 
-general:
-  branches:
-    only:
-      - dev
-      - master
-
 defaults: &defaults
   working_directory: ~/repo
   docker:
@@ -135,19 +129,23 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
             npm publish
 
+non_master: &non_master
+  filters:
+    branches:
+      ignore: master
+
+master_only: &master_only
+  filters:
+    branches:
+      only: master
+
 workflows:
   version: 2
   ci-cd:
     jobs:
       - build_and_test:
-          filters:
-            branches:
-              only:
-                - dev
-                - master
+          <<: *non_master
       - publish:
-          requires:
-            - build_and_test
           filters:
             branches:
               ignore: /.*/
