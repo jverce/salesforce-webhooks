@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 defaults: &defaults
   working_directory: ~/repo
@@ -6,7 +6,58 @@ defaults: &defaults
     - image: circleci/node:lts-buster
 
 jobs:
-  build_and_test:
+  verify_code:
+    <<: *defaults
+
+    parameters:
+      build_mode:
+        type: string
+        description: |-
+          The build mode to use when bundling the final package
+        enum:
+          - debug
+          - release
+        default: debug
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "yarn.lock" }}
+            - v1-dependencies-
+
+      - run:
+          name: Node Dependencies
+          command: |
+            yarn install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "yarn.lock" }}
+
+      - run:
+          name: Build Package
+          command: |
+            yarn build:<< parameters.build_mode >>
+
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - dist
+
+      - run:
+          name: Lint Code
+          command: |
+            yarn lint
+
+      - run:
+          name: Unit Tests
+          command: |
+            yarn test
+
+  integration_tests:
     <<: *defaults
 
     environment:
@@ -16,34 +67,13 @@ jobs:
     steps:
       - checkout
 
+      - attach_workspace:
+          at: ~/repo
+
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-{{ checksum "yarn.lock" }}
             - v1-dependencies-
-
-      - run:
-          name: Node Dependencies
-          command: |
-            npm install
-
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package-lock.json" }}
-
-      - persist_to_workspace:
-          root: ~/repo
-          paths: .
-
-      - run:
-          name: Build Package
-          command: |
-            npm run build
-
-      - run:
-          name: Unit Tests
-          command: |
-            npm test
 
       - run:
           name: Salesforce CLI
@@ -99,19 +129,16 @@ jobs:
             ./deploy_and_test_apex.sh
 
       - store_test_results:
-          working_directory: test/integ
           path: test/integ/test_reports
 
-  publish:
+  bump_version:
     <<: *defaults
 
     steps:
       - checkout
 
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
-            - v1-dependencies-
+      - attach_workspace:
+          at: ~/repo
 
       - add_ssh_keys:
           fingerprints:
@@ -120,14 +147,21 @@ jobs:
       - run:
           name: Update Package Version
           command: |
-            npm version --no-git-tag-version version $CIRCLE_TAG -m "[skip ci] Update package version: %s"
+            yarn version \
+              --message "[skip ci] Update package version: %s" \
+              --patch
             git push origin master
 
+  publish:
+    <<: *defaults
+
+    steps:
       - run:
           name: Publish NPM Package
           command: |
             echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
-            npm publish
+            yarn publish
+
 
 non_master: &non_master
   filters:
@@ -139,15 +173,44 @@ master_only: &master_only
     branches:
       only: master
 
+tagged_only: &tagged_only
+  filters:
+    tags:
+      only: /^v\d+\.\d+\.\d+$/
+    branches:
+      ignore: /.*/
+
 workflows:
-  version: 2
-  ci-cd:
+
+  development:
     jobs:
-      - build_and_test:
+      - verify_code:
+          name: verify_code_dev
           <<: *non_master
+      - integration_tests:
+          name: integration_tests_dev
+          requires:
+            - verify_code_dev
+
+  production:
+    jobs:
+      - verify_code:
+          name: verify_code_production
+          <<: *master_only
+      - integration_tests:
+          name: integration_tests_production
+          requires:
+            - verify_code_production
+      - bump_version:
+          requires:
+            - integration_tests_production
+
+  release:
+    jobs:
+      - verify_code:
+          name: verify_code_release
+          build_mode: release
+          <<: *tagged_only
       - publish:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+$/
+          requires:
+            - verify_code_release

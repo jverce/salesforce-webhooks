@@ -1,8 +1,8 @@
-import { getRandomName } from './common';
+import { getRandomName } from "./common";
 
 export const getWebhookCallout = (secretToken) => {
-  const template = require('../../resources/templates/apex/src/WebhookCallout.cls.handlebars');
-  const webhookCalloutName = getRandomName('Callout');
+  const template = require("../../resources/templates/apex/src/WebhookCallout.cls.handlebars");
+  const webhookCalloutName = getRandomName("Callout");
   const body = template({
     webhookCalloutName,
     secretToken,
@@ -14,8 +14,8 @@ export const getWebhookCallout = (secretToken) => {
 };
 
 export const getWebhookCalloutMock = () => {
-  const template = require('../../resources/templates/apex/test/HttpCalloutMock.cls.handlebars');
-  const webhookCalloutMockName = getRandomName('CalloutMock');
+  const template = require("../../resources/templates/apex/test/HttpCalloutMock.cls.handlebars");
+  const webhookCalloutMockName = getRandomName("CalloutMock");
   const body = template({
     webhookCalloutMockName,
   });
@@ -26,8 +26,8 @@ export const getWebhookCalloutMock = () => {
 };
 
 export const getSObjectFactory = () => {
-  const template = require('../../resources/templates/apex/test/SObjectFactory.cls.handlebars');
-  const name = getRandomName('SObjectFactory');
+  const template = require("../../resources/templates/apex/test/SObjectFactory.cls.handlebars");
+  const name = getRandomName("SObjectFactory");
   const body = template({
     name,
   });
@@ -45,7 +45,7 @@ export const getWebhookTrigger = (
   webhookCallout,
 ) => {
   const { name: webhookCalloutName } = webhookCallout;
-  const triggerName = getRandomName('Trigger');
+  const triggerName = getRandomName("Trigger");
   const body = template({
     triggerName,
     endpointUrl,
@@ -68,7 +68,7 @@ export const getWebhookTriggerTest = (
 ) => {
   const { name: sObjectFactoryName } = sObjectFactory;
   const { name: webhookCalloutMockName } = webhookCalloutMock;
-  const testClassName = getRandomName('Test');
+  const testClassName = getRandomName("Test");
   const body = template({
     testClassName,
     endpointUrl,
@@ -83,9 +83,9 @@ export const getWebhookTriggerTest = (
 };
 
 export const getDeployApexCodeBody = (authToken, classes, triggers) => {
-  const template = require('../../resources/templates/soap/apex/DeployApexCode.xml.handlebars');
-  const classBodies = classes.map(c => c.body);
-  const triggerBodies = triggers.map(t => t.body);
+  const template = require("../../resources/templates/soap/apex/DeployApexCode.xml.handlebars");
+  const classBodies = classes.map((c) => c.body);
+  const triggerBodies = triggers.map((t) => t.body);
   const body = template({
     authToken,
     classBodies,
@@ -97,7 +97,7 @@ export const getDeployApexCodeBody = (authToken, classes, triggers) => {
 };
 
 export const getDeleteApexCodeBody = (authToken, classNames, triggerNames) => {
-  const template = require('../../resources/templates/soap/apex/DeleteApexCode.xml.handlebars');
+  const template = require("../../resources/templates/soap/apex/DeleteApexCode.xml.handlebars");
   const body = template({
     authToken,
     classNames,

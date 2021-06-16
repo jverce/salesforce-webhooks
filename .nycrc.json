@@ -1,7 +1,11 @@
 {
   "all": true,
-  "include": ["src/**/*.js"],
-  "require": ["esm"],
+  "include": [
+    "src/**/*.js"
+  ],
+  "require": [
+    "esm"
+  ],
   "reporter": "text",
   "check-coverage": true,
   "lines": 100,

@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-import axios from 'axios';
+import axios from "axios";
 
 import {
   getDeleteApexCodeBody,
@@ -10,12 +10,12 @@ import {
   getWebhookCalloutMock,
   getWebhookTrigger,
   getWebhookTriggerTest,
-} from './utils/apex';
-import { wasSuccessfulSoapRequest } from './utils/common';
+} from "./utils/apex";
+import { wasSuccessfulSoapRequest } from "./utils/common";
 import {
   getCreateRemoteSiteBody,
   getDeleteRemoteSiteBody,
-} from './utils/metadata';
+} from "./utils/metadata";
 
 export class SalesforceClient {
   /**
@@ -32,7 +32,7 @@ export class SalesforceClient {
    */
   constructor(opts = {}) {
     const {
-      apiVersion = process.env.SALESFORCE_API_VERSION || '50.0',
+      apiVersion = process.env.SALESFORCE_API_VERSION || "50.0",
       authToken = process.env.SALESFORCE_AUTH_TOKEN,
       instance = process.env.SALESFORCE_INSTANCE,
     } = opts;
@@ -49,11 +49,11 @@ export class SalesforceClient {
     }
 
     if (!authToken) {
-      throw new Error(`An authentication token must be provided.`);
+      throw new Error("An authentication token must be provided.");
     }
 
     if (!instance) {
-      throw new Error('Instance information must be provided');
+      throw new Error("Instance information must be provided");
     }
   }
 
@@ -116,7 +116,9 @@ export class SalesforceClient {
       webhookCalloutMock,
       webhookTriggerTest,
     ];
-    const triggers = [webhookTrigger];
+    const triggers = [
+      webhookTrigger,
+    ];
     return {
       classes,
       triggers,
@@ -125,8 +127,8 @@ export class SalesforceClient {
 
   _baseHeaders() {
     return {
-      Authorization: `Bearer ${this.authToken}`,
-      'Content-Type': 'text/xml',
+      "Authorization": `Bearer ${this.authToken}`,
+      "Content-Type": "text/xml",
     };
   }
 
@@ -134,7 +136,7 @@ export class SalesforceClient {
     const { body } = getDeployApexCodeBody(this.authToken, classes, triggers);
     const headers = {
       ...this._baseHeaders(),
-      SOAPAction: 'compileAndTest',
+      SOAPAction: "compileAndTest",
     };
     return {
       body,
@@ -144,10 +146,12 @@ export class SalesforceClient {
 
   async _createRemoteSiteSetting(opts) {
     const { endpointUrl } = opts;
-    const { body, name } = getCreateRemoteSiteBody(this.authToken, endpointUrl);
+    const {
+      body, name,
+    } = getCreateRemoteSiteBody(this.authToken, endpointUrl);
     const headers = {
       ...this._baseHeaders(),
-      SOAPAction: 'remoteSiteSetting',
+      SOAPAction: "remoteSiteSetting",
     };
     const requestConfig = {
       headers,
@@ -167,7 +171,7 @@ export class SalesforceClient {
 
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
-      const msg = 'Could not setup remote site in Salesforce';
+      const msg = "Could not setup remote site in Salesforce";
       const error = {
         data,
         msg,
@@ -186,7 +190,7 @@ export class SalesforceClient {
       endpointUrl,
       sObjectType,
       associateParentEntity,
-      secretToken = '',
+      secretToken = "",
     } = opts;
 
     const apexComponents = await this._getApexComponents(
@@ -198,10 +202,15 @@ export class SalesforceClient {
       triggerTestTemplate,
     );
 
-    const { classes, triggers } = apexComponents;
+    const {
+      classes, triggers,
+    } = apexComponents;
     const classNames = classes.map((c) => c.name);
     const triggerNames = triggers.map((t) => t.name);
-    const { body, headers } = this._getDeployApexCodeRequest(classes, triggers);
+    const {
+      body,
+      headers,
+    } = this._getDeployApexCodeRequest(classes, triggers);
     const requestConfig = {
       headers,
     };
@@ -221,7 +230,7 @@ export class SalesforceClient {
 
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
-      const msg = 'Could not deploy Apex code to Salesforce';
+      const msg = "Could not deploy Apex code to Salesforce";
       const error = {
         data,
         msg,
@@ -238,7 +247,9 @@ export class SalesforceClient {
 
   async _createWebhookWorkflow(triggerTemplate, triggerTestTemplate, opts) {
     const { remoteSiteName } = await this._createRemoteSiteSetting(opts);
-    const { classNames, triggerNames } = await this._deployWebhook(
+    const {
+      classNames, triggerNames,
+    } = await this._deployWebhook(
       triggerTemplate,
       triggerTestTemplate,
       opts,
@@ -258,7 +269,7 @@ export class SalesforceClient {
     );
     const headers = {
       ...this._baseHeaders(),
-      SOAPAction: 'compileAndTest',
+      SOAPAction: "compileAndTest",
     };
     return {
       body,
@@ -267,7 +278,9 @@ export class SalesforceClient {
   }
 
   async _deleteApexCode(classNames, triggerNames) {
-    const { body, headers } = this._getDeleteApexCodeRequest(
+    const {
+      body, headers,
+    } = this._getDeleteApexCodeRequest(
       classNames,
       triggerNames,
     );
@@ -291,7 +304,7 @@ export class SalesforceClient {
     const { body } = getDeleteRemoteSiteBody(this.authToken, remoteSiteName);
     const headers = {
       ...this._baseHeaders(),
-      SOAPAction: 'remoteSiteSetting',
+      SOAPAction: "remoteSiteSetting",
     };
     return {
       body,
@@ -300,7 +313,9 @@ export class SalesforceClient {
   }
 
   async _deleteRemoteSiteSetting(remoteSiteName) {
-    const { body, headers } = this._getDeleteRemoteSiteSettingRequest(
+    const {
+      body, headers,
+    } = this._getDeleteRemoteSiteSettingRequest(
       remoteSiteName,
     );
     const requestConfig = {
@@ -323,12 +338,14 @@ export class SalesforceClient {
     await this._deleteRemoteSiteSetting(remoteSiteName);
   }
 
-  _validateCreateWebhookOpts({ endpointUrl, event, sObjectType }) {
+  _validateCreateWebhookOpts({
+    endpointUrl, event, sObjectType,
+  }) {
     if (!endpointUrl) {
-      throw new Error('Parameter "endpointUrl" is required.');
+      throw new Error("Parameter \"endpointUrl\" is required.");
     }
     if (!sObjectType) {
-      throw new Error('Parameter "sObjectType" is required.');
+      throw new Error("Parameter \"sObjectType\" is required.");
     }
     const allowedSObjectTypes = SalesforceClient.getAllowedSObjects(event);
     if (!allowedSObjectTypes.includes(sObjectType)) {
@@ -339,20 +356,26 @@ export class SalesforceClient {
   }
 
   static _getAllowedSObjectsNew(verbose) {
-    const basicSObjects = require('../resources/data/sobjects-new.json');
-    const changeEvents = require('../resources/data/sobjects-new-change-event.json');
+    const basicSObjects = require("../resources/data/sobjects-new.json");
+    const changeEvents = require("../resources/data/sobjects-new-change-event.json");
     if (verbose) {
-      return [...basicSObjects, ...changeEvents].sort((a, b) => {
+      return [
+        ...basicSObjects,
+        ...changeEvents,
+      ].sort((a, b) => {
         if (a.label < b.label) return -1;
         if (a.label > b.label) return 1;
         return 0;
       });
     }
-    return [...basicSObjects, ...changeEvents].map((i) => i.name).sort();
+    return [
+      ...basicSObjects,
+      ...changeEvents,
+    ].map((i) => i.name).sort();
   }
 
   static _getAllowedSObjectsUpdated(verbose) {
-    const allowedSObjects = require('../resources/data/sobjects-updated.json');
+    const allowedSObjects = require("../resources/data/sobjects-updated.json");
     if (verbose) {
       return allowedSObjects;
     }
@@ -360,7 +383,7 @@ export class SalesforceClient {
   }
 
   static _getAllowedSObjectsDeleted(verbose) {
-    const allowedSObjects = require('../resources/data/sobjects-deleted.json');
+    const allowedSObjects = require("../resources/data/sobjects-deleted.json");
     if (verbose) {
       return allowedSObjects;
     }
@@ -368,11 +391,11 @@ export class SalesforceClient {
   }
 
   static getAllowedSObjects(event, verbose = false) {
-    if (event === 'new') {
+    if (event === "new") {
       return this._getAllowedSObjectsNew(verbose);
-    } else if (event === 'updated') {
+    } else if (event === "updated") {
       return this._getAllowedSObjectsUpdated(verbose);
-    } else if (event === 'deleted') {
+    } else if (event === "deleted") {
       return this._getAllowedSObjectsDeleted(verbose);
     }
     return [];
@@ -399,26 +422,25 @@ export class SalesforceClient {
   async createWebhookNew(opts) {
     this._validateCreateWebhookOpts({
       ...opts,
-      event: 'new',
+      event: "new",
     });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
     // mutated. See
     // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
-    const sObjectDescription = await this._getSObjectDescription(
-      opts.sObjectType,
-    );
+    const { sObjectType } = opts;
+    const sObjectDescription = await this._getSObjectDescription(sObjectType);
 
     let triggerTemplate;
-    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+    if (sObjectDescription.associateEntityType === "ChangeEvent") {
       opts.associateParentEntity = sObjectDescription.associateParentEntity;
-      triggerTemplate = require('../resources/templates/apex/src/NewChangeEvent.trigger.handlebars');
+      triggerTemplate = require("../resources/templates/apex/src/NewChangeEvent.trigger.handlebars");
     } else {
-      triggerTemplate = require('../resources/templates/apex/src/NewSObject.trigger.handlebars');
+      triggerTemplate = require("../resources/templates/apex/src/NewSObject.trigger.handlebars");
     }
 
-    const triggerTestTemplate = require('../resources/templates/apex/test/NewSObjectTriggerTest.cls.handlebars');
+    const triggerTestTemplate = require("../resources/templates/apex/test/NewSObjectTriggerTest.cls.handlebars");
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,
@@ -447,22 +469,21 @@ export class SalesforceClient {
   async createWebhookUpdated(opts) {
     this._validateCreateWebhookOpts({
       ...opts,
-      event: 'updated',
+      event: "updated",
     });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
     // mutated. The **DO NOT SUPPORT** events other than `after insert`. See
     // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
-    const sObjectDescription = await this._getSObjectDescription(
-      opts.sObjectType,
-    );
-    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+    const { sObjectType } = opts;
+    const sObjectDescription = await this._getSObjectDescription(sObjectType);
+    if (sObjectDescription.associateEntityType === "ChangeEvent") {
       throw new Error(`${sObjectType} does not support "updated" events`);
     }
 
-    const triggerTemplate = require('../resources/templates/apex/src/UpdatedSObject.trigger.handlebars');
-    const triggerTestTemplate = require('../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars');
+    const triggerTemplate = require("../resources/templates/apex/src/UpdatedSObject.trigger.handlebars");
+    const triggerTestTemplate = require("../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars");
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,
@@ -491,22 +512,21 @@ export class SalesforceClient {
   async createWebhookDeleted(opts) {
     this._validateCreateWebhookOpts({
       ...opts,
-      event: 'deleted',
+      event: "deleted",
     });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
     // mutated. The **DO NOT SUPPORT** events other than `after insert`. See
     // https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_trigger_intro.htm
-    const sObjectDescription = await this._getSObjectDescription(
-      opts.sObjectType,
-    );
-    if (sObjectDescription.associateEntityType === 'ChangeEvent') {
+    const { sObjectType } = opts;
+    const sObjectDescription = await this._getSObjectDescription(sObjectType);
+    if (sObjectDescription.associateEntityType === "ChangeEvent") {
       throw new Error(`${sObjectType} does not support "deleted" events`);
     }
 
-    const triggerTemplate = require('../resources/templates/apex/src/DeletedSObject.trigger.handlebars');
-    const triggerTestTemplate = require('../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars');
+    const triggerTemplate = require("../resources/templates/apex/src/DeletedSObject.trigger.handlebars");
+    const triggerTestTemplate = require("../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars");
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,
@@ -537,11 +557,11 @@ export class SalesforceClient {
    */
   async createWebhook(opts) {
     const { event } = opts;
-    if (event === 'new') {
+    if (event === "new") {
       return this.createWebhookNew(opts);
-    } else if (event === 'updated') {
+    } else if (event === "updated") {
       return this.createWebhookUpdated(opts);
-    } else if (event === 'deleted') {
+    } else if (event === "deleted") {
       return this.createWebhookDeleted(opts);
     } else {
       const errorMessage = `Invalid event type: ${event}`;
@@ -551,21 +571,21 @@ export class SalesforceClient {
 
   _validateDeleteWebhookOpts(remoteSiteName, classNames, triggerNames) {
     if (!remoteSiteName) {
-      console.warn('Parameter "remoteSiteName" is empty.');
+      console.warn("Parameter \"remoteSiteName\" is empty.");
     }
 
     if (!Array.isArray(classNames)) {
-      throw new Error('Parameter "classNames" must be an array of strings.');
+      throw new Error("Parameter \"classNames\" must be an array of strings.");
     }
     if (classNames.length <= 0) {
-      console.warn('Parameter "classNames" is empty.');
+      console.warn("Parameter \"classNames\" is empty.");
     }
 
     if (!Array.isArray(triggerNames)) {
-      throw new Error('Parameter "triggerNames" must be an array of strings.');
+      throw new Error("Parameter \"triggerNames\" must be an array of strings.");
     }
     if (triggerNames.length <= 0) {
-      console.warn('Parameter "triggerNames" is empty.');
+      console.warn("Parameter \"triggerNames\" is empty.");
     }
   }
 
@@ -579,7 +599,11 @@ export class SalesforceClient {
    * @param {string[]} opts.triggerNames the names of the webhook triggers
    */
   async deleteWebhook(opts) {
-    const { remoteSiteName, classNames, triggerNames } = opts;
+    const {
+      remoteSiteName,
+      classNames,
+      triggerNames,
+    } = opts;
     this._validateDeleteWebhookOpts(remoteSiteName, classNames, triggerNames);
     return this._deleteWebhookWorkflow(
       remoteSiteName,

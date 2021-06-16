@@ -20,18 +20,18 @@ browser-like environment.**
 
 ### Installation
 
-Nothing special here: just a regula NPM/Yarn Node.js package.
+Nothing special here: just a regular NPM/Yarn Node.js package.
 
 #### NPM
 
 ```bash
-$ npm install --save salesforce-webhooks
+npm install --save salesforce-webhooks
 ```
 
 #### Yarn
 
 ```bash
-$ yarn add salesforce-webhooks
+yarn add salesforce-webhooks
 ```
 
 ### Usage
@@ -50,7 +50,7 @@ Salesforce organization:
 
 - **Salesforce auth token**: a valid REST API token with write access to the
   Salesforce SOAP API (see for example the [Salesforce REST API Developer
-  Guide(https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/quickstart_oauth.htm)])
+  Guide(<https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/quickstart_oauth.htm>)])
 - **Instance**: the instance identifier where the target organization is
   running. See [this
   page](https://help.salesforce.com/articleView?id=000314281&type=1&mode=1&language=en_US)
@@ -86,9 +86,9 @@ The client parameters can also be extracted from environment variables if they
 are not provided to the constructor:
 
 ```bash
-$ export SALESFORCE_API_VERSION='50.0'
-$ export SALESFORCE_AUTH_TOKEN='a secret API token'
-$ export SALESFORCE_INSTANCE='na139'
+export SALESFORCE_API_VERSION='50.0'
+export SALESFORCE_AUTH_TOKEN='a secret API token'
+export SALESFORCE_INSTANCE='na139'
 ```
 
 The constructor will resort to the environment variables above if no valid
@@ -131,7 +131,7 @@ the authenticity of the HTTP calls at the target endpoint. Whenever the endpoint
 receives an HTTP call, it can verify that the `X-Webhook-Token` header matches
 the secret token provided through the `secretToken` argument.
 
-To create a webhook that will make an HTTP POST call to http://example.com
+To create a webhook that will make an HTTP POST call to <http://example.com>
 whenever a new account is created, run the following code:
 
 ```js

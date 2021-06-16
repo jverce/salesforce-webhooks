@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from "crypto";
 
 export const getRandomName = (rawName) => {
   const maxLength = 40;
@@ -6,7 +6,7 @@ export const getRandomName = (rawName) => {
   const randomComponentLength = Math.floor(
     Math.max(0, maxLength - namePrefix.length) / 2,
   );
-  const randomComponent = randomBytes(randomComponentLength).toString('hex');
+  const randomComponent = randomBytes(randomComponentLength).toString("hex");
   return `${namePrefix}${randomComponent}`;
 };
 

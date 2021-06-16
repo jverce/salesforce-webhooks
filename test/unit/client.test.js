@@ -1,23 +1,26 @@
-import axios from 'axios';
-import chai, { expect } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import { describe } from 'mocha';
-import sinon from 'sinon';
-import { SalesforceClient } from '../../src/client';
-import { remoteSiteSettings } from './data/soap-responses';
+import axios from "axios";
+import chai,
+{ expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+import { describe } from "mocha";
+import sinon from "sinon";
+import { SalesforceClient } from "../../src/client";
+import { remoteSiteSettings } from "./data/soap-responses";
 
 chai.use(chaiAsPromised);
 
-describe('Salesforce client constructor', function () {
-  it('should grab settings from environment variables by default', function () {
-    const oldEnv = { ...process.env };
-    process.env.SALESFORCE_API_VERSION = '1.0';
-    process.env.SALESFORCE_AUTH_TOKEN = 'some-auth-token';
-    process.env.SALESFORCE_INSTANCE = 'some-instance';
+describe("Salesforce client constructor", function () {
+  it("should grab settings from environment variables by default", function () {
+    const oldEnv = {
+      ...process.env,
+    };
+    process.env.SALESFORCE_API_VERSION = "1.0";
+    process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
+    process.env.SALESFORCE_INSTANCE = "some-instance";
 
     const client = new SalesforceClient();
 
-    expect(client.authToken).to.equal('some-auth-token');
+    expect(client.authToken).to.equal("some-auth-token");
 
     // All the URL's should be pointing to the right Salesforce instance and API
     // version
@@ -31,17 +34,21 @@ describe('Salesforce client constructor', function () {
       .to.match(/some-instance/)
       .match(/v1\.0/); // This is a REST API URL, so the version has the format vXY.Z
 
-    process.env = { ...oldEnv };
+    process.env = {
+      ...oldEnv,
+    };
   });
 
-  it('should default the API version to 50.0', function () {
-    const oldEnv = { ...process.env };
-    process.env.SALESFORCE_AUTH_TOKEN = 'some-auth-token';
-    process.env.SALESFORCE_INSTANCE = 'some-instance';
+  it("should default the API version to 50.0", function () {
+    const oldEnv = {
+      ...process.env,
+    };
+    process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
+    process.env.SALESFORCE_INSTANCE = "some-instance";
 
     const client = new SalesforceClient();
 
-    expect(client.authToken).to.equal('some-auth-token');
+    expect(client.authToken).to.equal("some-auth-token");
 
     // All the URL's should be pointing to the right Salesforce instance and API
     // version
@@ -55,19 +62,23 @@ describe('Salesforce client constructor', function () {
       .to.match(/some-instance/)
       .match(/v50\.0/); // This is a REST API URL, so the version has the format vXY.Z
 
-    process.env = { ...oldEnv };
+    process.env = {
+      ...oldEnv,
+    };
   });
 
-  it('should accept an API version parameter', function () {
-    const oldEnv = { ...process.env };
-    process.env.SALESFORCE_AUTH_TOKEN = 'some-auth-token';
-    process.env.SALESFORCE_INSTANCE = 'some-instance';
+  it("should accept an API version parameter", function () {
+    const oldEnv = {
+      ...process.env,
+    };
+    process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
+    process.env.SALESFORCE_INSTANCE = "some-instance";
 
     const client = new SalesforceClient({
-      apiVersion: '51.0',
+      apiVersion: "51.0",
     });
 
-    expect(client.authToken).to.equal('some-auth-token');
+    expect(client.authToken).to.equal("some-auth-token");
 
     // All the URL's should be pointing to the right Salesforce instance and API
     // version
@@ -81,18 +92,22 @@ describe('Salesforce client constructor', function () {
       .to.match(/some-instance/)
       .match(/v51\.0/); // This is a REST API URL, so the version has the format vXY.Z
 
-    process.env = { ...oldEnv };
+    process.env = {
+      ...oldEnv,
+    };
   });
 
-  it('should accept an auth token parameter', function () {
-    const oldEnv = { ...process.env };
-    process.env.SALESFORCE_INSTANCE = 'some-instance';
+  it("should accept an auth token parameter", function () {
+    const oldEnv = {
+      ...process.env,
+    };
+    process.env.SALESFORCE_INSTANCE = "some-instance";
 
     const client = new SalesforceClient({
-      authToken: 'some-other-token',
+      authToken: "some-other-token",
     });
 
-    expect(client.authToken).to.equal('some-other-token');
+    expect(client.authToken).to.equal("some-other-token");
 
     // All the URL's should be pointing to the right Salesforce instance and API
     // version
@@ -106,18 +121,22 @@ describe('Salesforce client constructor', function () {
       .to.match(/some-instance/)
       .match(/v50\.0/); // This is a REST API URL, so the version has the format vXY.Z
 
-    process.env = { ...oldEnv };
+    process.env = {
+      ...oldEnv,
+    };
   });
 
-  it('should accept an auth token parameter', function () {
-    const oldEnv = { ...process.env };
-    process.env.SALESFORCE_AUTH_TOKEN = 'some-auth-token';
+  it("should accept an auth token parameter", function () {
+    const oldEnv = {
+      ...process.env,
+    };
+    process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
 
     const client = new SalesforceClient({
-      instance: 'some-other-instance',
+      instance: "some-other-instance",
     });
 
-    expect(client.authToken).to.equal('some-auth-token');
+    expect(client.authToken).to.equal("some-auth-token");
 
     // All the URL's should be pointing to the right Salesforce instance and API
     // version
@@ -131,26 +150,28 @@ describe('Salesforce client constructor', function () {
       .to.match(/some-other-instance/)
       .match(/v50\.0/); // This is a REST API URL, so the version has the format vXY.Z
 
-    process.env = { ...oldEnv };
+    process.env = {
+      ...oldEnv,
+    };
   });
 
-  it('should reject API versions in an incorrect format', function () {
+  it("should reject API versions in an incorrect format", function () {
     expect(
       () =>
         new SalesforceClient({
-          apiVersion: 'some-strange-api-version-format',
+          apiVersion: "some-strange-api-version-format",
         }),
     ).to.throws();
   });
 });
 
-describe('Salesforce webhook creation', function () {
+describe("Salesforce webhook creation", function () {
   let client;
   let sandbox;
 
   before(function () {
-    process.env.SALESFORCE_AUTH_TOKEN = 'some-auth-token';
-    process.env.SALESFORCE_INSTANCE = 'some-instance';
+    process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
+    process.env.SALESFORCE_INSTANCE = "some-instance";
     client = new SalesforceClient();
   });
 
@@ -162,59 +183,63 @@ describe('Salesforce webhook creation', function () {
     sandbox.restore();
   });
 
-  it('should reject requests for unsupported SObject types', async function () {
+  it("should reject requests for unsupported SObject types", async function () {
     const opts = {
-      sObjectType: 'SomeWeirdType',
-      endpointUrl: 'https://example.com',
+      sObjectType: "SomeWeirdType",
+      endpointUrl: "https://example.com",
     };
     await expect(client.createWebhookNew(opts)).to.be.rejected;
     await expect(client.createWebhookUpdated(opts)).to.be.rejected;
     await expect(client.createWebhookDeleted(opts)).to.be.rejected;
   });
 
-  it('should reject requests for unsupported event types', async function () {
+  it("should reject requests for unsupported event types", async function () {
     const opts = {
-      sObjectType: 'Account',
-      endpointUrl: 'https://example.com',
-      event: 'some-weird-event',
+      sObjectType: "Account",
+      endpointUrl: "https://example.com",
+      event: "some-weird-event",
     };
     await expect(client.createWebhook(opts)).to.be.rejected;
   });
 
-  it('should reject requests if SObject type is not provided', async function () {
+  it("should reject requests if SObject type is not provided", async function () {
     const opts = {
-      endpointUrl: 'https://example.com',
-      event: 'some-weird-event',
+      endpointUrl: "https://example.com",
+      event: "some-weird-event",
     };
     await expect(client.createWebhook(opts)).to.be.rejected;
   });
 
-  it('should reject requests if endpoint URL is not provided', async function () {
+  it("should reject requests if endpoint URL is not provided", async function () {
     const opts = {
-      sObjectType: 'Account',
-      event: 'some-weird-event',
+      sObjectType: "Account",
+      event: "some-weird-event",
     };
     await expect(client.createWebhook(opts)).to.be.rejected;
   });
 
-  it('should create webhooks for supported types to listen to new objects', async function () {
+  it("should create webhooks for supported types to listen to new objects", async function () {
     const opts = {
-      sObjectType: 'Account',
-      endpointUrl: 'https://example.com',
+      sObjectType: "Account",
+      endpointUrl: "https://example.com",
     };
     const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
     sandbox
-      .stub(axios, 'get')
+      .stub(axios, "get")
       .withArgs(describeApiUrl, sinon.match.any)
-      .resolves({ data: {} });
+      .resolves({
+        data: {},
+      });
     const postStub = sandbox
-      .stub(axios, 'post')
-      .resolves({ data: remoteSiteSettings.success });
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.success,
+      });
 
     await client.createWebhookNew(opts);
     await client.createWebhook({
       ...opts,
-      event: 'new',
+      event: "new",
     });
 
     // We make 2 POST requests per webhook:
@@ -223,24 +248,28 @@ describe('Salesforce webhook creation', function () {
     sinon.assert.callCount(postStub, 4);
   });
 
-  it('should create webhooks for supported types to listen to updated objects', async function () {
+  it("should create webhooks for supported types to listen to updated objects", async function () {
     const opts = {
-      sObjectType: 'Account',
-      endpointUrl: 'https://example.com',
+      sObjectType: "Account",
+      endpointUrl: "https://example.com",
     };
     const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
     sandbox
-      .stub(axios, 'get')
+      .stub(axios, "get")
       .withArgs(describeApiUrl, sinon.match.any)
-      .resolves({ data: {} });
+      .resolves({
+        data: {},
+      });
     const postStub = sandbox
-      .stub(axios, 'post')
-      .resolves({ data: remoteSiteSettings.success });
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.success,
+      });
 
     await client.createWebhookUpdated(opts);
     await client.createWebhook({
       ...opts,
-      event: 'updated',
+      event: "updated",
     });
 
     // We make 2 POST requests per webhook creation call:
@@ -249,24 +278,28 @@ describe('Salesforce webhook creation', function () {
     sinon.assert.callCount(postStub, 4);
   });
 
-  it('should create webhooks for supported types to listen to deleted objects', async function () {
+  it("should create webhooks for supported types to listen to deleted objects", async function () {
     const opts = {
-      sObjectType: 'Account',
-      endpointUrl: 'https://example.com',
+      sObjectType: "Account",
+      endpointUrl: "https://example.com",
     };
     const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
     sandbox
-      .stub(axios, 'get')
+      .stub(axios, "get")
       .withArgs(describeApiUrl, sinon.match.any)
-      .resolves({ data: {} });
+      .resolves({
+        data: {},
+      });
     const postStub = sandbox
-      .stub(axios, 'post')
-      .resolves({ data: remoteSiteSettings.success });
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.success,
+      });
 
     await client.createWebhookDeleted(opts);
     await client.createWebhook({
       ...opts,
-      event: 'deleted',
+      event: "deleted",
     });
 
     // We make 2 POST requests per webhook:
@@ -275,41 +308,52 @@ describe('Salesforce webhook creation', function () {
     sinon.assert.callCount(postStub, 4);
   });
 
-  it.skip('should handle ChangeEvent type when the describe API indicates it', async function () {
-    // This test is skipped until change events are supported again. Right now,
-    // Salesforce is throwing a 500 HTTP error when trying to create triggers
-    // for change event types.
+  it("should handle ChangeEvent type when the describe API indicates it", async function () {
     const opts = {
-      sObjectType: 'AccountChangeEvent',
-      endpointUrl: 'https://example.com',
+      sObjectType: "AccountChangeEvent",
+      endpointUrl: "https://example.com",
     };
     const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
     sandbox
-      .stub(axios, 'get')
+      .stub(axios, "get")
       .withArgs(describeApiUrl, sinon.match.any)
       .resolves({
-        associateEntityType: 'ChangeEvent',
-        associateParentEntity: 'Account',
+        data: {
+          associateEntityType: "ChangeEvent",
+          associateParentEntity: "Account",
+        },
+      });
+    const postStub = sandbox
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.success,
       });
 
-    const postSpy = sandbox.spy(axios, 'post');
-
     await client.createWebhookNew(opts);
+
+    // We make 2 POST requests per webhook:
+    // 1. To whitelist the endpoint URL (i.e. RemoteSiteSetting)
+    // 2. To deploy the Apex code (i.e. CompileAndTest)
+    sinon.assert.callCount(postStub, 2);
   });
 
-  it('should fail if the SOAP request did not succeed', async function () {
+  it("should fail if the SOAP request did not succeed", async function () {
     const opts = {
-      sObjectType: 'Account',
-      endpointUrl: 'https://example.com',
+      sObjectType: "Account",
+      endpointUrl: "https://example.com",
     };
     const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
     sandbox
-      .stub(axios, 'get')
+      .stub(axios, "get")
       .withArgs(describeApiUrl, sinon.match.any)
-      .resolves({ data: {} });
+      .resolves({
+        data: {},
+      });
     const postStub = sandbox
-      .stub(axios, 'post')
-      .resolves({ data: remoteSiteSettings.failure });
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.failure,
+      });
 
     await expect(client.createWebhookNew(opts)).to.be.rejected;
 
@@ -318,13 +362,13 @@ describe('Salesforce webhook creation', function () {
   });
 });
 
-describe('Salesforce webhook deletion', function () {
+describe("Salesforce webhook deletion", function () {
   let client;
   let sandbox;
 
   before(function () {
-    process.env.SALESFORCE_AUTH_TOKEN = 'some-auth-token';
-    process.env.SALESFORCE_INSTANCE = 'some-instance';
+    process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
+    process.env.SALESFORCE_INSTANCE = "some-instance";
     client = new SalesforceClient();
   });
 
@@ -336,31 +380,43 @@ describe('Salesforce webhook deletion', function () {
     sandbox.restore();
   });
 
-  it('should reject requests when class names are not provided as an array', async function () {
+  it("should reject requests when class names are not provided as an array", async function () {
     const opts = {
-      classNames: 'ClassOne,ClassTwo',
-      triggerNames: ['MainTrigger'],
+      classNames: "ClassOne,ClassTwo",
+      triggerNames: [
+        "MainTrigger",
+      ],
     };
     await expect(client.deleteWebhook(opts)).to.be.rejected;
   });
 
-  it('should reject requests when trigger names are not provided as an array', async function () {
+  it("should reject requests when trigger names are not provided as an array", async function () {
     const opts = {
-      classNames: ['ClassOne', 'ClassTwo'],
-      triggerNames: 'MainTrigger',
+      classNames: [
+        "ClassOne",
+        "ClassTwo",
+      ],
+      triggerNames: "MainTrigger",
     };
     await expect(client.deleteWebhook(opts)).to.be.rejected;
   });
 
-  it('should delete webhooks when all information is provided', async function () {
+  it("should delete webhooks when all information is provided", async function () {
     const opts = {
-      classNames: ['ClassOne', 'ClassTwo'],
-      triggerNames: ['MainTrigger'],
-      remoteSiteName: 'SiteName',
+      classNames: [
+        "ClassOne",
+        "ClassTwo",
+      ],
+      triggerNames: [
+        "MainTrigger",
+      ],
+      remoteSiteName: "SiteName",
     };
     const postStub = sandbox
-      .stub(axios, 'post')
-      .resolves({ data: remoteSiteSettings.success });
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.success,
+      });
 
     await client.deleteWebhook(opts);
 
@@ -371,14 +427,14 @@ describe('Salesforce webhook deletion', function () {
   });
 });
 
-describe('Salesforce misc methods', function () {
-  it('should return verbose information about allowed SObject types', function () {
-    const event = 'new';
+describe("Salesforce misc methods", function () {
+  it("should return verbose information about allowed SObject types", function () {
+    const event = "new";
     const verbose = true;
 
     const result = SalesforceClient.getAllowedSObjects(event, verbose);
 
-    expect(result[0]).to.be.haveOwnProperty('label');
-    expect(result[0]).to.be.haveOwnProperty('name');
+    expect(result[0]).to.be.haveOwnProperty("label");
+    expect(result[0]).to.be.haveOwnProperty("name");
   });
 });

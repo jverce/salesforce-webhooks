@@ -1,3 +1,3 @@
 export {
-  SalesforceClient
-} from './client';
+  SalesforceClient,
+} from "./client";
