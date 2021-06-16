@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --enable-source-maps
 
 const fs = require("fs");
 const { getAuthToken } = require("./common");
 
-const { SalesforceClient } = require("../../dist/main");
+const { SalesforceClient } = require("../../dist");
 
 const initClient = async (argv) => {
   const {

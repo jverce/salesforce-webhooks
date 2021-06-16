@@ -2,12 +2,11 @@ const path = require("path");
 
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
-module.exports = {
+const baseConfig = {
   target: "node",
-  mode: "production",
   entry: "./src/index.js",
   output: {
-    filename: "main.js",
+    filename: "index.js",
     path: path.resolve(__dirname, "dist"),
     library: "salesforceWebhooks",
     libraryTarget: "umd",
@@ -29,7 +28,38 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
   ],
+};
+
+const productionConfig = {
+  devtool: "hidden-source-map",
   optimization: {
     minimize: true,
+    moduleIds: "size",
+    removeAvailableModules: true,
   },
+};
+
+const developmentConfig = {
+  devtool: "eval-source-map",
+  optimization: {
+    moduleIds: "named",
+  },
+};
+
+module.exports = (_, argv) => {
+  const { mode = "production" } = argv;
+
+  if (mode === "production") {
+    return {
+      ...baseConfig,
+      ...productionConfig,
+    };
+  }
+
+  if (mode === "development") {
+    return {
+      ...baseConfig,
+      ...developmentConfig,
+    };
+  }
 };

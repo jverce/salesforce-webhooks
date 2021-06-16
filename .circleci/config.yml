@@ -9,6 +9,16 @@ jobs:
   verify_code:
     <<: *defaults
 
+    parameters:
+      build_mode:
+        type: string
+        description: |-
+          The build mode to use when bundling the final package
+        enum:
+          - debug
+          - release
+        default: debug
+
     steps:
       - checkout
 
@@ -30,7 +40,7 @@ jobs:
       - run:
           name: Build Package
           command: |
-            yarn build
+            yarn build:<< parameters.build_mode >>
 
       - persist_to_workspace:
           root: ~/repo
@@ -198,8 +208,9 @@ workflows:
   release:
     jobs:
       - verify_code:
-          name: verify_code_production
+          name: verify_code_release
+          build_mode: release
           <<: *tagged_only
       - publish:
           requires:
-            - verify_code_production
+            - verify_code_release

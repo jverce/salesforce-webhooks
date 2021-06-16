@@ -8,7 +8,7 @@
     "promise",
     "async"
   ],
-  "main": "dist/main.js",
+  "main": "dist",
   "files": [
     "dist"
   ],
@@ -17,9 +17,11 @@
     "cjs": true
   },
   "scripts": {
+    "build": "webpack",
+    "build:debug": "yarn build --mode development",
+    "build:release": "yarn build --mode production",
     "test": "mocha",
     "coverage": "nyc yarn test",
-    "build": "webpack",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "lint:format": "yarn lint --fix"

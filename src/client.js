@@ -208,7 +208,8 @@ export class SalesforceClient {
     const classNames = classes.map((c) => c.name);
     const triggerNames = triggers.map((t) => t.name);
     const {
-      body, headers,
+      body,
+      headers,
     } = this._getDeployApexCodeRequest(classes, triggers);
     const requestConfig = {
       headers,
