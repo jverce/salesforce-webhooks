@@ -4,7 +4,7 @@ import chai,
 import chaiAsPromised from "chai-as-promised";
 import { describe } from "mocha";
 import sinon from "sinon";
-import { SalesforceClient } from "../../src/client";
+import { SalesforceClient } from "../../src";
 import { remoteSiteSettings } from "./data/soap-responses";
 
 chai.use(chaiAsPromised);

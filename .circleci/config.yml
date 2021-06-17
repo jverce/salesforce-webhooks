@@ -55,7 +55,10 @@ jobs:
       - run:
           name: Unit Tests
           command: |
-            yarn test
+            yarn test:coverage
+
+      - store_test_results:
+          path: coverage
 
   integration_tests:
     <<: *defaults
@@ -187,10 +190,6 @@ workflows:
       - verify_code:
           name: verify_code_dev
           <<: *non_master
-      - integration_tests:
-          name: integration_tests_dev
-          requires:
-            - verify_code_dev
 
   production:
     jobs:
