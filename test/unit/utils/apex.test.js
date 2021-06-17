@@ -54,10 +54,11 @@ describe("Apex code utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const { body: result } = apex.getWebhookTrigger(
       template,
-      endpointUrl,
-      sObjectType,
-      undefined,
       webhookCalloutMock,
+      {
+        endpointUrl,
+        sObjectType,
+      },
     );
     validateApexTrigger(result);
   });
@@ -70,10 +71,12 @@ describe("Apex code utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const { body: result } = apex.getWebhookTrigger(
       template,
-      endpointUrl,
-      sObjectType,
-      associateParentEntity,
       webhookCalloutMock,
+      {
+        endpointUrl,
+        sObjectType,
+        associateParentEntity,
+      },
     );
     validateApexTrigger(result);
   });
@@ -85,10 +88,27 @@ describe("Apex code utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const { body: result } = apex.getWebhookTrigger(
       template,
-      endpointUrl,
-      sObjectType,
-      undefined,
       webhookCalloutMock,
+      {
+        endpointUrl,
+        sObjectType,
+      },
+    );
+    validateApexTrigger(result);
+  });
+
+  it.skip("trigger generator for updated fields in objects should generate valid Apex code", async function () {
+    const template = require("../../../resources/templates/apex/src/UpdatedAnyOfSObjectFields.trigger.handlebars");
+    const endpointUrl = "https://example.com";
+    const sObjectType = "SomeType";
+    const webhookCalloutMock = apex.getWebhookCalloutMock();
+    const { body: result } = apex.getWebhookTrigger(
+      template,
+      webhookCalloutMock,
+      {
+        endpointUrl,
+        sObjectType,
+      },
     );
     validateApexTrigger(result);
   });
@@ -101,10 +121,12 @@ describe("Apex code utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const { body: result } = apex.getWebhookTriggerTest(
       template,
-      endpointUrl,
-      sObjectType,
-      sObjectFactory,
       webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectType,
+      },
     );
     validateApexClass(result);
   });
@@ -117,10 +139,12 @@ describe("Apex code utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const { body: result } = apex.getWebhookTriggerTest(
       template,
-      endpointUrl,
-      sObjectType,
-      sObjectFactory,
       webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectType,
+      },
     );
     validateApexClass(result);
   });
@@ -133,10 +157,12 @@ describe("Apex code utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const { body: result } = apex.getWebhookTriggerTest(
       template,
-      endpointUrl,
-      sObjectType,
-      sObjectFactory,
       webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectType,
+      },
     );
     validateApexClass(result);
   });
@@ -156,10 +182,11 @@ describe("SOAP request utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const trigger = apex.getWebhookTrigger(
       template,
-      endpointUrl,
-      sObjectType,
-      undefined,
       webhookCalloutMock,
+      {
+        endpointUrl,
+        sObjectType,
+      },
     );
     const triggers = [
       trigger,
@@ -189,10 +216,11 @@ describe("SOAP request utils", function () {
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const trigger = apex.getWebhookTrigger(
       template,
-      endpointUrl,
-      sObjectType,
-      undefined,
       webhookCalloutMock,
+      {
+        endpointUrl,
+        sObjectType,
+      },
     );
     const triggers = [
       trigger,

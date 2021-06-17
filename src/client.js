@@ -94,10 +94,12 @@ export class SalesforceClient {
 
     const webhookTrigger = getWebhookTrigger(
       triggerTemplate,
-      endpointUrl,
-      sObjectType,
-      associateParentEntity,
       webhookCallout,
+      {
+        endpointUrl,
+        sObjectType,
+        associateParentEntity,
+      },
     );
 
     const sObjectUnderTest = associateParentEntity
@@ -105,10 +107,12 @@ export class SalesforceClient {
       : sObjectType;
     const webhookTriggerTest = getWebhookTriggerTest(
       triggerTestTemplate,
-      endpointUrl,
-      sObjectUnderTest,
-      sObjectFactory,
       webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectUnderTest,
+      },
     );
     const classes = [
       sObjectFactory,

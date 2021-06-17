@@ -85,7 +85,6 @@ do
         EXIT_CODE=$?
         if [ ${EXIT_CODE} -ne 0 ]
         then
-
             >&2 echo "Webhook for ${SOBJECT_TYPE} COULD NOT be created (event type: ${EVENT_TYPE})"
             exit ${EXIT_CODE}
         fi
