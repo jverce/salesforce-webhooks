@@ -153,7 +153,7 @@ jobs:
             yarn version \
               --message "[skip ci] Update package version: %s" \
               --patch
-            git push origin master
+            git push --tags origin master
 
   publish:
     <<: *defaults
