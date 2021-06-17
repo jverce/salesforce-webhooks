@@ -343,19 +343,34 @@ export class SalesforceClient {
   }
 
   _validateCreateWebhookOpts({
-    endpointUrl, event, sObjectType,
+    endpointUrl,
+    event,
+    sObjectType,
+    fieldsToCheck = [],
+    fieldsToCheckMode = "any",
   }) {
     if (!endpointUrl) {
-      throw new Error("Parameter \"endpointUrl\" is required.");
+      throw new Error("Parameter 'endpointUrl' is required.");
     }
     if (!sObjectType) {
-      throw new Error("Parameter \"sObjectType\" is required.");
+      throw new Error("Parameter 'sObjectType' is required.");
     }
     const allowedSObjectTypes = SalesforceClient.getAllowedSObjects(event);
     if (!allowedSObjectTypes.includes(sObjectType)) {
       throw new Error(
         `${sObjectType} is not supported for events of type "${event}".`,
       );
+    }
+    if (!Array.isArray(fieldsToCheck)) {
+      throw new Error("Parameter 'fieldsToCheck' must be an array of strings.");
+    }
+    if (
+      ![
+        "any",
+        "all",
+      ].includes(fieldsToCheckMode)
+    ) {
+      throw new Error("Parameter 'fieldsToCheckMode' must be either 'any' or 'all'.");
     }
   }
 
@@ -414,7 +429,7 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.
@@ -461,7 +476,16 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {string[]} [opts.fieldsToCheck=[]] when creating a webhook for
+   * object updates, you can specify a list of fields in the watched SObject
+   * that will be used to decide whether to trigger the webhook or not. If none
+   * of those fields were changed during the last object update, the webhook
+   * won't be triggered.
+   * @param {"any"|"all"} [opts.fieldsToCheckMode="any"] when
+   * `opts.fieldsToCheck` is not empty, this option will determine whether the
+   * webhook issue a call only when every field of interest changes (`all`)  or
+   * when any of the fields of interest change (`any`).
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.
@@ -504,7 +528,7 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.
@@ -547,10 +571,19 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.event the type of SObject event to listen. These can
-   * be `new` (a new SObject is created), `updated` (an SObject is updated) or
-   * `deleted` (an SObject is deleted).
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {"new"|"updated"|"deleted"} opts.event the type of SObject event to
+   * listen. These can be `new` (a new SObject is created), `updated` (an
+   * SObject is updated) or `deleted` (an SObject is deleted).
+   * @param {string[]} [opts.fieldsToCheck=[]] when creating a webhook for
+   * object updates, you can specify a list of fields in the watched SObject
+   * that will be used to decide whether to trigger the webhook or not. If none
+   * of those fields were changed during the last object update, the webhook
+   * won't be triggered.
+   * @param {"any"|"all"} [opts.fieldsToCheckMode="any"] when
+   * `opts.fieldsToCheck` is not empty, this option will determine whether the
+   * webhook issue a call only when every field of interest changes (`all`)  or
+   * when any of the fields of interest change (`any`).
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.
