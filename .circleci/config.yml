@@ -142,6 +142,12 @@ jobs:
             - 'eb:79:6a:d5:94:92:0f:75:b8:29:75:8c:56:bd:4a:f2'
 
       - run:
+          name: Set up Git
+          command: |
+            git config user.email "${GIT_USER_EMAIL}"
+            git config user.name "${GIT_USER_NAME}"
+
+      - run:
           name: Update Package Version
           command: |
             yarn version \
