@@ -160,6 +160,11 @@ jobs:
     <<: *defaults
 
     steps:
+      - checkout
+
+      - attach_workspace:
+          at: ~/repo
+
       - run:
           name: Publish NPM Package
           command: |
@@ -213,5 +218,7 @@ workflows:
           name: verify_code_release
           <<: *tagged_only
       - publish:
+          name: publish_release
           requires:
             - verify_code_release
+          <<: *tagged_only
