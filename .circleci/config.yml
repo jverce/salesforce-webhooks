@@ -22,9 +22,18 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "yarn.lock" }}
+
       - run:
           name: Node Dependencies
           command: yarn install --frozen-lockfile
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "yarn.lock" }}
 
       - run:
           name: Build Package
