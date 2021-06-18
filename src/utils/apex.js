@@ -39,18 +39,14 @@ export const getSObjectFactory = () => {
 
 export const getWebhookTrigger = (
   template,
-  endpointUrl,
-  sObjectType,
-  associateParentEntity,
   webhookCallout,
+  templateVars = {},
 ) => {
   const { name: webhookCalloutName } = webhookCallout;
   const triggerName = getRandomName("Trigger");
   const body = template({
+    ...templateVars,
     triggerName,
-    endpointUrl,
-    sObjectType,
-    associateParentEntity,
     webhookCalloutName,
   });
   return {
@@ -61,18 +57,16 @@ export const getWebhookTrigger = (
 
 export const getWebhookTriggerTest = (
   template,
-  endpointUrl,
-  sObjectType,
-  sObjectFactory,
   webhookCalloutMock,
+  sObjectFactory,
+  templateVars = {},
 ) => {
   const { name: sObjectFactoryName } = sObjectFactory;
   const { name: webhookCalloutMockName } = webhookCalloutMock;
   const testClassName = getRandomName("Test");
   const body = template({
+    ...templateVars,
     testClassName,
-    endpointUrl,
-    sObjectType,
     sObjectFactoryName,
     webhookCalloutMockName,
   });

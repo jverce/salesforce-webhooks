@@ -67,7 +67,7 @@ export class SalesforceClient {
     return data;
   }
 
-  _getCommonApexComponents(secretToken) {
+  _getCommonApexComponents(secretToken = "") {
     const sObjectFactory = getSObjectFactory();
     const webhookCallout = getWebhookCallout(secretToken);
     const webhookCalloutMock = getWebhookCalloutMock();
@@ -79,12 +79,15 @@ export class SalesforceClient {
   }
 
   async _getApexComponents(
-    endpointUrl,
-    sObjectType,
-    associateParentEntity,
-    secretToken,
     triggerTemplate,
     triggerTestTemplate,
+    {
+      endpointUrl,
+      sObjectType,
+      associateParentEntity,
+      secretToken,
+      ...additionalTemplateVars
+    },
   ) {
     const {
       sObjectFactory,
@@ -94,10 +97,13 @@ export class SalesforceClient {
 
     const webhookTrigger = getWebhookTrigger(
       triggerTemplate,
-      endpointUrl,
-      sObjectType,
-      associateParentEntity,
       webhookCallout,
+      {
+        endpointUrl,
+        sObjectType,
+        associateParentEntity,
+        ...additionalTemplateVars,
+      },
     );
 
     const sObjectUnderTest = associateParentEntity
@@ -105,10 +111,13 @@ export class SalesforceClient {
       : sObjectType;
     const webhookTriggerTest = getWebhookTriggerTest(
       triggerTestTemplate,
-      endpointUrl,
-      sObjectUnderTest,
-      sObjectFactory,
       webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectType: sObjectUnderTest,
+        ...additionalTemplateVars,
+      },
     );
     const classes = [
       sObjectFactory,
@@ -186,24 +195,15 @@ export class SalesforceClient {
   }
 
   async _deployWebhook(triggerTemplate, triggerTestTemplate, opts) {
-    const {
-      endpointUrl,
-      sObjectType,
-      associateParentEntity,
-      secretToken = "",
-    } = opts;
-
     const apexComponents = await this._getApexComponents(
-      endpointUrl,
-      sObjectType,
-      associateParentEntity,
-      secretToken,
       triggerTemplate,
       triggerTestTemplate,
+      opts,
     );
 
     const {
-      classes, triggers,
+      classes,
+      triggers,
     } = apexComponents;
     const classNames = classes.map((c) => c.name);
     const triggerNames = triggers.map((t) => t.name);
@@ -230,13 +230,17 @@ export class SalesforceClient {
 
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
-      const msg = "Could not deploy Apex code to Salesforce";
+      const msg = `
+        Could not deploy Apex code to Salesforce
+        - Response from Salesforce: ${JSON.stringify(data, null, 2)}
+        - Classes: ${JSON.stringify(classes, null, 2)}
+        - Triggers: ${JSON.stringify(triggers, null, 2)}
+      `;
       const error = {
         data,
         msg,
       };
       console.error(msg);
-      console.error(data.response);
       throw new Error(error);
     }
     return {
@@ -248,7 +252,8 @@ export class SalesforceClient {
   async _createWebhookWorkflow(triggerTemplate, triggerTestTemplate, opts) {
     const { remoteSiteName } = await this._createRemoteSiteSetting(opts);
     const {
-      classNames, triggerNames,
+      classNames,
+      triggerNames,
     } = await this._deployWebhook(
       triggerTemplate,
       triggerTestTemplate,
@@ -339,19 +344,34 @@ export class SalesforceClient {
   }
 
   _validateCreateWebhookOpts({
-    endpointUrl, event, sObjectType,
+    endpointUrl,
+    event,
+    sObjectType,
+    fieldsToCheck = [],
+    fieldsToCheckMode = "any",
   }) {
     if (!endpointUrl) {
-      throw new Error("Parameter \"endpointUrl\" is required.");
+      throw new Error("Parameter 'endpointUrl' is required.");
     }
     if (!sObjectType) {
-      throw new Error("Parameter \"sObjectType\" is required.");
+      throw new Error("Parameter 'sObjectType' is required.");
     }
     const allowedSObjectTypes = SalesforceClient.getAllowedSObjects(event);
     if (!allowedSObjectTypes.includes(sObjectType)) {
       throw new Error(
         `${sObjectType} is not supported for events of type "${event}".`,
       );
+    }
+    if (!Array.isArray(fieldsToCheck)) {
+      throw new Error("Parameter 'fieldsToCheck' must be an array of strings.");
+    }
+    if (
+      ![
+        "any",
+        "all",
+      ].includes(fieldsToCheckMode)
+    ) {
+      throw new Error("Parameter 'fieldsToCheckMode' must be either 'any' or 'all'.");
     }
   }
 
@@ -410,7 +430,7 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.
@@ -457,7 +477,16 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {string[]} [opts.fieldsToCheck=[]] when creating a webhook for
+   * object updates, you can specify a list of fields in the watched SObject
+   * that will be used to decide whether to trigger the webhook or not. If none
+   * of those fields were changed during the last object update, the webhook
+   * won't be triggered.
+   * @param {"any"|"all"} [opts.fieldsToCheckMode="any"] when
+   * `opts.fieldsToCheck` is not empty, this option will determine whether the
+   * webhook issue a call only when every field of interest changes (`all`)  or
+   * when any of the fields of interest change (`any`).
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.
@@ -482,8 +511,33 @@ export class SalesforceClient {
       throw new Error(`${sObjectType} does not support "updated" events`);
     }
 
-    const triggerTemplate = require("../resources/templates/apex/src/UpdatedSObject.trigger.handlebars");
-    const triggerTestTemplate = require("../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars");
+    // If the input args do not include a list of specific SObject fields to
+    // check, we use the default 'UpdatedSObject' template which does not check
+    // for any specific fields. Otherwise, and depending on the provided
+    // `fieldsToCheckMode`, we select one of the templates that do check for
+    // such fields.
+    const {
+      fieldsToCheck = [],
+      fieldsToCheckMode = "any",
+    } = opts;
+
+    // This cannot be done in a cleaner, dynamic way because webpack won't be
+    // able to resolve and bundle these static files unless the exact path is
+    // specified at compile time
+    let triggerTemplate;
+    let triggerTestTemplate;
+    if (fieldsToCheck.length === 0) {
+      triggerTemplate = require("../resources/templates/apex/src/UpdatedSObject.trigger.handlebars");
+      triggerTestTemplate = require("../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars");
+    } else if (fieldsToCheckMode === "all") {
+
+      triggerTemplate = require("../resources/templates/apex/src/UpdatedAllOfSObjectFields.trigger.handlebars");
+      triggerTestTemplate = require("../resources/templates/apex/test/UpdatedAllOfSObjectFieldsTriggerTest.cls.handlebars");
+    } else {
+      triggerTemplate = require("../resources/templates/apex/src/UpdatedAnyOfSObjectFields.trigger.handlebars");
+      triggerTestTemplate = require("../resources/templates/apex/test/UpdatedAnyOfSObjectFieldsTriggerTest.cls.handlebars");
+    }
+
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,
@@ -500,7 +554,7 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.
@@ -543,10 +597,19 @@ export class SalesforceClient {
    * webhook gets triggered
    * @param {string} opts.sObjectType the type of SObject for which the webhook
    * will listen to events
-   * @param {string} opts.event the type of SObject event to listen. These can
-   * be `new` (a new SObject is created), `updated` (an SObject is updated) or
-   * `deleted` (an SObject is deleted).
-   * @param {string} opts.secretToken optional (but recommended), this is an
+   * @param {"new"|"updated"|"deleted"} opts.event the type of SObject event to
+   * listen. These can be `new` (a new SObject is created), `updated` (an
+   * SObject is updated) or `deleted` (an SObject is deleted).
+   * @param {string[]} [opts.fieldsToCheck=[]] when creating a webhook for
+   * object updates, you can specify a list of fields in the watched SObject
+   * that will be used to decide whether to trigger the webhook or not. If none
+   * of those fields were changed during the last object update, the webhook
+   * won't be triggered.
+   * @param {"any"|"all"} [opts.fieldsToCheckMode="any"] when
+   * `opts.fieldsToCheck` is not empty, this option will determine whether the
+   * webhook issue a call only when every field of interest changes (`all`)  or
+   * when any of the fields of interest change (`any`).
+   * @param {string} [opts.secretToken] optional (but recommended), this is an
    * arbitrary key that will be provided by each webhook call in its headers
    * under the tag `X-Webhook-Token`. This allows for the receiving end of the
    * HTTP call to verify the identity of the caller.

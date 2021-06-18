@@ -17,7 +17,7 @@ jobs:
         enum:
           - debug
           - release
-        default: debug
+        default: release
 
     steps:
       - checkout
@@ -25,12 +25,10 @@ jobs:
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "yarn.lock" }}
-            - v1-dependencies-
 
       - run:
           name: Node Dependencies
-          command: |
-            yarn install
+          command: yarn install --frozen-lockfile
 
       - save_cache:
           paths:
@@ -39,8 +37,7 @@ jobs:
 
       - run:
           name: Build Package
-          command: |
-            yarn build:<< parameters.build_mode >>
+          command: yarn build:<< parameters.build_mode >>
 
       - persist_to_workspace:
           root: ~/repo
@@ -49,13 +46,18 @@ jobs:
 
       - run:
           name: Lint Code
-          command: |
-            yarn lint
+          command: yarn lint
 
       - run:
           name: Unit Tests
-          command: |
-            yarn test
+          command: yarn test
+
+      - run:
+          name: Coverage Checks
+          command: yarn test:coverage
+
+      - store_artifacts:
+          path: coverage
 
   integration_tests:
     <<: *defaults
@@ -69,11 +71,6 @@ jobs:
 
       - attach_workspace:
           at: ~/repo
-
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "yarn.lock" }}
-            - v1-dependencies-
 
       - run:
           name: Salesforce CLI
@@ -156,7 +153,7 @@ jobs:
             yarn version \
               --message "[skip ci] Update package version: %s" \
               --patch
-            git push origin master
+            git push --tags origin master
 
   publish:
     <<: *defaults
@@ -192,16 +189,14 @@ workflows:
     jobs:
       - verify_code:
           name: verify_code_dev
+          build_mode: debug
           <<: *non_master
-      - integration_tests:
-          name: integration_tests_dev
-          requires:
-            - verify_code_dev
 
   production:
     jobs:
       - verify_code:
           name: verify_code_production
+          build_mode: debug
           <<: *master_only
       - integration_tests:
           name: integration_tests_production
@@ -215,7 +210,6 @@ workflows:
     jobs:
       - verify_code:
           name: verify_code_release
-          build_mode: release
           <<: *tagged_only
       - publish:
           requires:

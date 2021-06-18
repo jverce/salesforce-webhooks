@@ -21,7 +21,7 @@
     "build:debug": "yarn build --mode development",
     "build:release": "yarn build --mode production",
     "test": "mocha",
-    "coverage": "nyc yarn test",
+    "test:coverage": "c8 yarn test",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "lint:format": "yarn lint --fix"
@@ -39,6 +39,7 @@
   "devDependencies": {
     "antlr4ts": "^0.5.0-alpha.3",
     "apex-parser": "^2.5.0",
+    "c8": "^7.7.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "clean-webpack-plugin": "^3.0.0",
@@ -52,7 +53,6 @@
     "junit-xml": "^1.2.0",
     "libxmljs": "^0.19.7",
     "mocha": "^8.2.1",
-    "nyc": "^15.1.0",
     "putout": "^18.1.1",
     "sinon": "^9.2.1",
     "webpack": "^5.6.0",

@@ -1,3 +1,9 @@
+# Build output
 dist
+
+# Dependency files
 node_modules
+
+# Coverage reports
 .nyc_output
+coverage

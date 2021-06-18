@@ -1,0 +1,38 @@
+@isTest
+public class {{testClassName}} {
+    @isTest
+    static void testBatch() {
+        Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
+        List<{{sObjectType}}> a =
+            (List<{{sObjectType}}>) {{sObjectFactoryName}}.createSObjectList('{{sObjectType}}', true, 4);
+        insert a;
+
+        // Base case
+        update a;
+
+        {{#each fieldsToCheck}}
+        // Update only the '{{this}}' field
+        for ({{@root.sObjectType}} item : a) {
+            item.{{this}} += item.{{this}};
+        }
+        update a;
+
+        {{/each}}
+    }
+    @isTest
+    static void testSingle() {
+        Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
+        {{sObjectType}} a = ({{sObjectType}}) {{sObjectFactoryName}}.createSObject('{{sObjectType}}', true);
+        insert a;
+
+        // Base case
+        update a;
+
+        {{#each fieldsToCheck}}
+        // Update only the '{{this}}' field
+        a.{{this}} += a.{{this}};
+        update a;
+
+        {{/each}}
+    }
+}
