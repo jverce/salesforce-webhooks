@@ -67,7 +67,7 @@ export class SalesforceClient {
     return data;
   }
 
-  _getCommonApexComponents(secretToken) {
+  _getCommonApexComponents(secretToken = "") {
     const sObjectFactory = getSObjectFactory();
     const webhookCallout = getWebhookCallout(secretToken);
     const webhookCalloutMock = getWebhookCalloutMock();
@@ -79,12 +79,15 @@ export class SalesforceClient {
   }
 
   async _getApexComponents(
-    endpointUrl,
-    sObjectType,
-    associateParentEntity,
-    secretToken,
     triggerTemplate,
     triggerTestTemplate,
+    {
+      endpointUrl,
+      sObjectType,
+      associateParentEntity,
+      secretToken,
+      ...additionalTemplateVars
+    },
   ) {
     const {
       sObjectFactory,
@@ -99,6 +102,7 @@ export class SalesforceClient {
         endpointUrl,
         sObjectType,
         associateParentEntity,
+        ...additionalTemplateVars,
       },
     );
 
@@ -111,7 +115,8 @@ export class SalesforceClient {
       sObjectFactory,
       {
         endpointUrl,
-        sObjectUnderTest,
+        sObjectType: sObjectUnderTest,
+        ...additionalTemplateVars,
       },
     );
     const classes = [
@@ -190,24 +195,15 @@ export class SalesforceClient {
   }
 
   async _deployWebhook(triggerTemplate, triggerTestTemplate, opts) {
-    const {
-      endpointUrl,
-      sObjectType,
-      associateParentEntity,
-      secretToken = "",
-    } = opts;
-
     const apexComponents = await this._getApexComponents(
-      endpointUrl,
-      sObjectType,
-      associateParentEntity,
-      secretToken,
       triggerTemplate,
       triggerTestTemplate,
+      opts,
     );
 
     const {
-      classes, triggers,
+      classes,
+      triggers,
     } = apexComponents;
     const classNames = classes.map((c) => c.name);
     const triggerNames = triggers.map((t) => t.name);
@@ -234,13 +230,17 @@ export class SalesforceClient {
 
     const { data } = result;
     if (!wasSuccessfulSoapRequest(data)) {
-      const msg = "Could not deploy Apex code to Salesforce";
+      const msg = `
+        Could not deploy Apex code to Salesforce
+        - Response from Salesforce: ${JSON.stringify(data, null, 2)}
+        - Classes: ${JSON.stringify(classes, null, 2)}
+        - Triggers: ${JSON.stringify(triggers, null, 2)}
+      `;
       const error = {
         data,
         msg,
       };
       console.error(msg);
-      console.error(data.response);
       throw new Error(error);
     }
     return {
@@ -252,7 +252,8 @@ export class SalesforceClient {
   async _createWebhookWorkflow(triggerTemplate, triggerTestTemplate, opts) {
     const { remoteSiteName } = await this._createRemoteSiteSetting(opts);
     const {
-      classNames, triggerNames,
+      classNames,
+      triggerNames,
     } = await this._deployWebhook(
       triggerTemplate,
       triggerTestTemplate,
@@ -510,8 +511,33 @@ export class SalesforceClient {
       throw new Error(`${sObjectType} does not support "updated" events`);
     }
 
-    const triggerTemplate = require("../resources/templates/apex/src/UpdatedSObject.trigger.handlebars");
-    const triggerTestTemplate = require("../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars");
+    // If the input args do not include a list of specific SObject fields to
+    // check, we use the default 'UpdatedSObject' template which does not check
+    // for any specific fields. Otherwise, and depending on the provided
+    // `fieldsToCheckMode`, we select one of the templates that do check for
+    // such fields.
+    const {
+      fieldsToCheck = [],
+      fieldsToCheckMode = "any",
+    } = opts;
+
+    // This cannot be done in a cleaner, dynamic way because webpack won't be
+    // able to resolve and bundle these static files unless the exact path is
+    // specified at compile time
+    let triggerTemplate;
+    let triggerTestTemplate;
+    if (fieldsToCheck.length === 0) {
+      triggerTemplate = require("../resources/templates/apex/src/UpdatedSObject.trigger.handlebars");
+      triggerTestTemplate = require("../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars");
+    } else if (fieldsToCheckMode === "all") {
+
+      triggerTemplate = require("../resources/templates/apex/src/UpdatedAllOfSObjectFields.trigger.handlebars");
+      triggerTestTemplate = require("../resources/templates/apex/test/UpdatedAllOfSObjectFieldsTriggerTest.cls.handlebars");
+    } else {
+      triggerTemplate = require("../resources/templates/apex/src/UpdatedAnyOfSObjectFields.trigger.handlebars");
+      triggerTestTemplate = require("../resources/templates/apex/test/UpdatedAnyOfSObjectFieldsTriggerTest.cls.handlebars");
+    }
+
     return this._createWebhookWorkflow(
       triggerTemplate,
       triggerTestTemplate,

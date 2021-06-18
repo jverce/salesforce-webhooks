@@ -278,6 +278,40 @@ describe("Salesforce webhook creation", function () {
     sinon.assert.callCount(postStub, 4);
   });
 
+  it("should create webhooks for supported types to listen to any updated fields in objects", async function () {
+    const opts = {
+      sObjectType: "Account",
+      endpointUrl: "https://example.com",
+      fieldsToCheck: [
+        "Name",
+        "Email",
+      ],
+    };
+    const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
+    sandbox
+      .stub(axios, "get")
+      .withArgs(describeApiUrl, sinon.match.any)
+      .resolves({
+        data: {},
+      });
+    const postStub = sandbox
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.success,
+      });
+
+    await client.createWebhookUpdated(opts);
+    await client.createWebhook({
+      ...opts,
+      event: "updated",
+    });
+
+    // We make 2 POST requests per webhook creation call:
+    // 1. To whitelist the endpoint URL (i.e. RemoteSiteSetting)
+    // 2. To deploy the Apex code (i.e. CompileAndTest)
+    sinon.assert.callCount(postStub, 4);
+  });
+
   it("should create webhooks for supported types to listen to deleted objects", async function () {
     const opts = {
       sObjectType: "Account",

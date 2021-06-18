@@ -33,11 +33,15 @@ const createWebhook = async (argv) => {
     endpointUrl,
     eventType: event,
     sobjectType: sObjectType,
+    fieldsToCheck,
+    fieldsToCheckMode,
   } = argv;
   const webhookOpts = {
     endpointUrl,
     event,
     sObjectType,
+    fieldsToCheck,
+    fieldsToCheckMode,
   };
   const webhookData = await client.createWebhook(webhookOpts);
   outputWebhookData(argv, webhookData);
@@ -85,6 +89,23 @@ require("yargs/yargs")(process.argv.slice(2))
     describe: "SObject type (e.g. Account, Lead, etc.)",
   })
   .implies("create", "sobject-type")
+  .option("fields-to-check", {
+    alias: "fc",
+    type: "string",
+    array: true,
+    describe: "Fields in the SObject type (e.g. Account, Lead, etc.) to check for updates",
+  })
+  .option("fields-to-check-mode", {
+    alias: "fcm",
+    type: "string",
+    choices: [
+      "any",
+      "all",
+    ],
+    default: "any",
+    describe: "Whether the webhook should react when all the fields to check are updated, or when any of them does",
+  })
+  .implies("fields-to-check", "fields-to-check-mode")
   .option("output-file", {
     alias: "o",
     type: "string",

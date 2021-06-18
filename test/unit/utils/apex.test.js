@@ -63,6 +63,24 @@ describe("Apex code utils", function () {
     validateApexTrigger(result);
   });
 
+  it("trigger test generator for new objects should generate valid Apex code", function () {
+    const template = require("../../../resources/templates/apex/test/NewSObjectTriggerTest.cls.handlebars");
+    const endpointUrl = "https://example.com";
+    const sObjectType = "SomeType";
+    const sObjectFactory = apex.getSObjectFactory();
+    const webhookCalloutMock = apex.getWebhookCalloutMock();
+    const { body: result } = apex.getWebhookTriggerTest(
+      template,
+      webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectType,
+      },
+    );
+    validateApexClass(result);
+  });
+
   it("trigger generator for new ChangeEvent objects should generate valid Apex code", function () {
     const template = require("../../../resources/templates/apex/src/NewChangeEvent.trigger.handlebars");
     const endpointUrl = "https://example.com";
@@ -97,6 +115,24 @@ describe("Apex code utils", function () {
     validateApexTrigger(result);
   });
 
+  it("trigger test generator for updated objects should generate valid Apex code", function () {
+    const template = require("../../../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars");
+    const endpointUrl = "https://example.com";
+    const sObjectType = "SomeType";
+    const sObjectFactory = apex.getSObjectFactory();
+    const webhookCalloutMock = apex.getWebhookCalloutMock();
+    const { body: result } = apex.getWebhookTriggerTest(
+      template,
+      webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectType,
+      },
+    );
+    validateApexClass(result);
+  });
+
   it(
     "trigger generator for any of the updated fields in objects should generate valid Apex code",
     function () {
@@ -120,6 +156,29 @@ describe("Apex code utils", function () {
       validateApexTrigger(result);
     },
   );
+
+  it("trigger test generator for any of the updated fields in objects should generate valid Apex code", function () {
+    const template = require("../../../resources/templates/apex/test/UpdatedAnyOfSObjectFieldsTriggerTest.cls.handlebars");
+    const endpointUrl = "https://example.com";
+    const sObjectType = "SomeType";
+    const fieldsToCheck = [
+      "Name",
+      "Email",
+    ];
+    const sObjectFactory = apex.getSObjectFactory();
+    const webhookCalloutMock = apex.getWebhookCalloutMock();
+    const { body: result } = apex.getWebhookTriggerTest(
+      template,
+      webhookCalloutMock,
+      sObjectFactory,
+      {
+        endpointUrl,
+        sObjectType,
+        fieldsToCheck,
+      },
+    );
+    validateApexClass(result);
+  });
 
   it(
     "trigger generator for all of the updated fields in objects should generate valid Apex code",
@@ -145,10 +204,14 @@ describe("Apex code utils", function () {
     },
   );
 
-  it("trigger test generator for deleted objects should generate valid Apex code", function () {
-    const template = require("../../../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars");
+  it("trigger test generator for all of the updated fields in objects should generate valid Apex code", function () {
+    const template = require("../../../resources/templates/apex/test/UpdatedAllOfSObjectFieldsTriggerTest.cls.handlebars");
     const endpointUrl = "https://example.com";
     const sObjectType = "SomeType";
+    const fieldsToCheck = [
+      "Name",
+      "Email",
+    ];
     const sObjectFactory = apex.getSObjectFactory();
     const webhookCalloutMock = apex.getWebhookCalloutMock();
     const { body: result } = apex.getWebhookTriggerTest(
@@ -158,13 +221,14 @@ describe("Apex code utils", function () {
       {
         endpointUrl,
         sObjectType,
+        fieldsToCheck,
       },
     );
     validateApexClass(result);
   });
 
-  it("trigger test generator for updated objects should generate valid Apex code", function () {
-    const template = require("../../../resources/templates/apex/test/UpdatedSObjectTriggerTest.cls.handlebars");
+  it("trigger test generator for deleted objects should generate valid Apex code", function () {
+    const template = require("../../../resources/templates/apex/test/DeletedSObjectTriggerTest.cls.handlebars");
     const endpointUrl = "https://example.com";
     const sObjectType = "SomeType";
     const sObjectFactory = apex.getSObjectFactory();
