@@ -18,15 +18,13 @@ trigger {{triggerName}} on {{sObjectType}} (after update) {
                 String.valueOf(item.Id)
             }
         );
+
         final {{sObjectType}} itemFull = ({{sObjectType}}) Database.query(query);
+        final {{sObjectType}} oldItem = ({{sObjectType}}) Trigger.OldMap.get(item.Id);
 
         final Map<String, {{sObjectType}}> eventData = new Map<String, {{sObjectType}}>();
         eventData.put('New', itemFull);
-
-        if (Trigger.OldMap != null) {
-            final {{sObjectType}} oldItem = ({{sObjectType}}) Trigger.OldMap.get(item.Id);
-            eventData.put('Old', oldItem);
-        }
+        eventData.put('Old', oldItem);
 
         final String content = {{webhookCalloutName}}.jsonContent(eventData);
         {{webhookCalloutName}}.callout('{{endpointUrl}}', content);

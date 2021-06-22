@@ -13,12 +13,13 @@ public class {{testClassName}} {
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
         for ({{@root.sObjectType}} item : a) {
-            item.{{this}} += item.{{this}};
+            {{@root.sObjectFactoryName}}.setNewValueForField(item, '{{this}}');
         }
         update a;
 
         {{/each}}
     }
+
     @isTest
     static void testSingle() {
         Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
@@ -30,7 +31,7 @@ public class {{testClassName}} {
 
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
-        a.{{this}} += a.{{this}};
+        {{@root.sObjectFactoryName}}.setNewValueForField(a, '{{this}}');
         update a;
 
         {{/each}}

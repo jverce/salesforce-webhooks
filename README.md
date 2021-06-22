@@ -119,7 +119,7 @@ The following interfaces serve the purpose of creating webhooks:
 - **`createWebhookNew`**: creates a webhook that gets triggers when a new object
   is created
 - **`createWebhookUpdated`**: creates a webhook that gets triggers when an
-  object is updated
+  object (or a subset of its fields) is updated
 - **`createWebhookDeleted`**: creates a webhook that gets triggers when an
   object is deleted
 - **`createWebhook`**: it takes an additional argument `event` whose values can

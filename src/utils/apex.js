@@ -27,13 +27,13 @@ export const getWebhookCalloutMock = () => {
 
 export const getSObjectFactory = () => {
   const template = require("../../resources/templates/apex/test/SObjectFactory.cls.handlebars");
-  const name = getRandomName("SObjectFactory");
+  const className = getRandomName("SObjectFactory");
   const body = template({
-    name,
+    className,
   });
   return {
     body,
-    name,
+    name: className,
   };
 };
 

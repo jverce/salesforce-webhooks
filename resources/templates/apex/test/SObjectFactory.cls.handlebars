@@ -15,12 +15,12 @@
  */
 
 @isTest
-public with sharing class {{name}} {
-    public static Boolean FillAllFields = false;
+public with sharing class {{className}} {
+    public static final Boolean FillAllFields = false;
 
-    // Key : SobjectAPIName  For ex. Account
-    // Value : Map<String, Schema.SObjectField>, field map (k:fieldname, v:Schema.Sobjectfield)
-    public static Profile userProfile = [
+    // Key: SObject API name (e.g. 'Account')
+    // Value: Map<String, Schema.SObjectField>, field map (k: fieldName, v: Schema.SObjectField)
+    public static final Profile UserProfile = [
         SELECT Id
         FROM Profile
         WHERE Name = 'System Administrator'
@@ -35,20 +35,69 @@ public with sharing class {{name}} {
     private static final Map<String, SObject> SObjectCache =
         new Map<String, SObject>();
 
-    // Default Country and State
-    // When Country and State Picklists are enabled, cannot dynamically resolve which States are within a Country
-    public static string DefaultCountry = 'United States';
-    public static string DefaultCountryCode = 'US';
-    public static string DefaultState = 'Pennsylvania';
-    public static string DefaultStateCode = 'PA';
+    // When Country and State Picklists are enabled, cannot dynamically resolve
+    // which States are within a Country. For that reason, we select values from
+    // a limited, pre-defined set of countries and an associated set of states.
 
-    // Key: sobject.field
-    // Value: first picklist value
-    private static final Map<String, String> DefaultPicklistValue =
-        new Map<String, String>();
+    private static Integer currentCountryIndex = 0;
+    private static Integer currentStateIndex = 0;
+    private final static Integer NumCountries = 3;
+    private final static Integer NumStates = 4;
+    private final static List<String> CountryCodes = new List<String> {
+        'CA',
+        'MX',
+        'US'
+    };
+    private final static Map<String, String> CountryNameForCode =
+        new Map<String, String> {
+            'CA' => 'Canada',
+            'MX' => 'Mexico',
+            'US' => 'United States'
+        };
+    private final static Map<String, List<String>> StateCodesForCountryCode =
+        new Map<String, List<String>> {
+            'CA' => new List<String> {
+                'AB',
+                'BC',
+                'SK',
+                'QC'
+            },
+            'MX' => new List<String> {
+                'MI',
+                'OA',
+                'PU',
+                'QR'
+            },
+            'US' => new List<String> {
+                'AL',
+                'FL',
+                'LA',
+                'TX'
+            }
+        };
+    private final static Map<String, String> StateNameForCode =
+        new Map<String, String> {
+            'AB' => 'Alberta',
+            'BC' => 'British Columbia',
+            'SK' => 'Saskatchewan',
+            'QC' => 'Quebec',
+            'MI' => 'Michoacan',
+            'OA' => 'Oaxaca',
+            'PU' => 'Puebla',
+            'QR' => 'Quintana Roo',
+            'AL' => 'Alabama',
+            'FL' => 'Florida',
+            'LA' => 'Louisiana',
+            'TX' => 'Texas'
+        };
 
-    // can't map by Schema.sObjectType, use object name String instead
-    public static Map<String, Set<String>> ExcludedFields = new Map<String, Set<String>> {
+    // Key: '{SObjectType name}.{SObjectField name}'
+    // Value: list of possible pick-list values
+    private static final Map<String, List<Schema.PicklistEntry>> PicklistValues =
+        new Map<String, List<Schema.PicklistEntry>>();
+
+    // Can't use `Schema.SObjectType` as keys, use object name string instead
+    public static final Map<String, Set<String>> ExcludedFields = new Map<String, Set<String>> {
         'All' => new Set<String> {
             'CreatedById',
             'CreatedDate',
@@ -71,8 +120,8 @@ public with sharing class {{name}} {
         }
     };
 
-    // include nillable fields
-    public static Map<String, Set<String>> IncludedFields = new Map<String, Set<String>> {
+    // Include nillable fields
+    public static final Map<String, Set<String>> IncludedFields = new Map<String, Set<String>> {
         'ContentVersion' => new Set<String> {
             'ContentUrl'
         }
@@ -91,25 +140,26 @@ public with sharing class {{name}} {
     }
 
     public static List<SObject> createSObjectList(
-        String objectType,
-        Boolean cascade,
-        Integer initialCounter,
-        Integer numberOfObjects
+        final String objectType,
+        final Boolean cascade,
+        final Integer initialCounter,
+        final Integer numberOfObjects
     ) {
-        List<SObject> sos = new List<SObject>();
-        for( Integer i = 0; i < numberOfObjects; i++ ) {
+        final List<SObject> sos = new List<SObject>();
+        for (Integer i = 0; i < numberOfObjects; i++) {
             SObjectCache.clear();
-            Integer counter = i + initialCounter;
-            sos.add(createSObject(objectType, cascade, counter));
+            sos.add(createSObject(objectType, cascade, initialCounter + i));
         }
         return sos;
     }
 
-    private static SObject newInstance(String objectType) {
+    private static SObject newInstance(final String objectType) {
         final Schema.sObjectType token = GlobalDescribe.get(objectType);
         if (token == null) {
             throw new IllegalArgumentException('Unsupported ObjectType ' + objectType);
-        } else if (!token.getDescribe().isCreateable()) {
+        }
+
+        if (!token.getDescribe().isCreateable()) {
             System.debug(String.format(
                 'Type "{0}" is not createable, setting to "null"',
                 new List<String> {
@@ -118,10 +168,14 @@ public with sharing class {{name}} {
             ));
             return null;
         }
+
         return token.newSObject();
     }
 
-    private static SObject getSObjectFromCache(String objectType, Boolean isRoot) {
+    private static SObject getSObjectFromCache(
+        final String objectType,
+        final Boolean isRoot
+    ) {
         if (!SObjectCache.containsKey(objectType)) {
             final SObject obj = newInstance(objectType);
             SObjectCache.put(objectType, obj);
@@ -151,15 +205,19 @@ public with sharing class {{name}} {
         return obj;
     }
 
-    public static SObject createSObject(String objectType, Boolean cascade, Integer counter) {
+    public static SObject createSObject(
+        final String objectType,
+        final Boolean cascade,
+        final Integer counter
+    ) {
         return createSObject(objectType, cascade, counter, true);
     }
 
     public static SObject createSObject(
-        String objectType,
-        Boolean cascade,
-        Integer counter,
-        Boolean isRoot
+        final String objectType,
+        final Boolean cascade,
+        final Integer counter,
+        final Boolean isRoot
     ) {
         final SObject obj = getSObjectFromCache(objectType, isRoot);
         if (obj == null || obj.Id != null) {
@@ -179,65 +237,148 @@ public with sharing class {{name}} {
         return obj;
     }
 
-    public static SObject createSObject(String objectType, Boolean cascade) {
+    public static SObject createSObject(
+        final String objectType,
+        final Boolean cascade
+    ) {
         return createSObject(objectType, cascade, 1);
     }
 
     /**
-        Returns a field map for a given sobject.
-
-        Note : this method is kept public for Test cases to share the same field map info, without requiring a field desribe.
-
-        @param objectType sobject api name for ex. Account
-        @returns FieldMap [Key:FieldName,Value:Schema.SObjectField]
-    */
-    public static  Map<String, Schema.SObjectField> fieldMapFor(String objectType) {
-        Map<String, Schema.SObjectField> fieldMap = null;
-        String normalizedObjectType = objectType.toLowerCase();
-
+     * Returns a field map for a given SObject.
+     *
+     * Note: this method is kept public for test cases to share
+     * the same field map info, without requiring a field description.
+     *
+     * @param {String} objectType SObject API name (e.g. `Account`)
+     * @returns a map where the keys are the names of the SObject fields,
+     * and the values are their corresponding `Schema.SObjectField` object
+     */
+    public static Map<String, Schema.SObjectField> fieldMapFor(final String objectType) {
+        final String normalizedObjectType = objectType.toLowerCase();
         if (FieldMapCache.containsKey(normalizedObjectType)) {
-            fieldMap = FieldMapCache.get(normalizedObjectType);
-        } else {
-            fieldMap = GlobalDescribe.get(objectType).getDescribe().fields.getMap();
-            // cache it for next use
-            FieldMapCache.put(normalizedObjectType, fieldMap);
+            return FieldMapCache.get(normalizedObjectType);
         }
+
+        final Map<String, Schema.SObjectField> fieldMap = GlobalDescribe
+            .get(objectType)
+            .getDescribe()
+            .fields
+            .getMap();
+
+        // Cache it for next use
+        FieldMapCache.put(normalizedObjectType, fieldMap);
 
         return fieldMap;
     }
 
-    static String getDefaultPicklistValue(SObject obj, Schema.DescribeFieldResult fieldDescribe) {
-        String key = obj.getSObjectType() + '.' + fieldDescribe.getName();
+    static String getNewPicklistValue(
+        final SObject obj,
+        final Schema.SObjectField field
+    ) {
+        final Schema.SObjectType objectType = obj.getSObjectType();
+        final Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+        final String key = String.format(
+            '{0}.{1}',
+            new List<String> {
+                String.valueOf(objectType),
+                fieldDescribe.getName()
+            }
+        );
 
-        if (!DefaultPicklistValue.containsKey(key)) {
-            List<Schema.PicklistEntry> entries = fieldDescribe.getPicklistValues();
-            String value = entries.size() > 0 ? entries[0].getValue() : null;
-            DefaultPicklistValue.put(key, value);
+        if (!PicklistValues.containsKey(key)) {
+            final List<Schema.PicklistEntry> entries = fieldDescribe.getPicklistValues();
+            final String value = entries.size() > 0 ? entries[0].getValue() : null;
+            PicklistValues.put(key, entries);
         }
 
-        return DefaultPicklistValue.get(key);
+		final List<Schema.PicklistEntry> entries = PicklistValues.get(key);
+        if (entries.size() <= 0) {
+            return null;
+        }
+
+        final Object currentValue = obj.get(field);
+        final String currentValueStr = currentValue == null ? null : currentValue.toString();
+        for (Schema.PicklistEntry entry : entries) {
+            final String value = entry.getValue();
+            if (value != currentValueStr) {
+                return value;
+            }
+        }
+
+        // Unfortunately there are no more alternative values in the picklist,
+        // so the only alternative is returning `null`, but only if the field
+        // itself supports it
+        return fieldDescribe.isNillable() ? null : currentValueStr;
     }
 
-    static Boolean isExcludedField(Schema.DescribeFieldResult fieldDescribe) {
-        return ExcludedFields.get('All').contains(fieldDescribe.getName());
+    static String getNewCountryCode() {
+        currentCountryIndex = Math.mod(currentCountryIndex + 1, NumCountries);
+        return CountryCodes.get(currentCountryIndex);
     }
 
-    static Boolean isExcludedField(SObject obj, Schema.DescribeFieldResult fieldDescribe) {
-        Set<String> fields = ExcludedFields.get(obj.getSObjectType().getDescribe().getName());
+    static String getNewCountry() {
+        final String countryCode = getNewCountryCode();
+        return CountryNameForCode.get(countryCode);
+    }
+
+    static String getNewStateCode() {
+        final String currentCountryCode = CountryCodes.get(currentCountryIndex);
+        currentStateIndex = Math.mod(currentStateIndex + 1, NumStates);
+        return StateCodesForCountryCode
+            .get(currentCountryCode)
+            .get(currentStateIndex);
+    }
+
+    static String getNewState() {
+        final String stateCode = getNewStateCode();
+        return StateNameForCode.get(stateCode);
+    }
+
+    static Boolean isExcludedField(final Schema.DescribeFieldResult fieldDescribe) {
+        return ExcludedFields
+            .get('All')
+            .contains(fieldDescribe.getName());
+    }
+
+    static Boolean isExcludedField(
+        final SObject obj,
+        final Schema.DescribeFieldResult fieldDescribe
+    ) {
+        final String objectTypeName = obj
+            .getSObjectType()
+            .getDescribe()
+            .getName();
+        final Set<String> fields = ExcludedFields.get(objectTypeName);
         return fields == null ? false : fields.contains(fieldDescribe.getName());
     }
 
-    static Boolean isIncludedField(SObject obj, Schema.DescribeFieldResult fieldDescribe) {
-        Set<String> fields = includedFields.get(obj.getSObjectType().getDescribe().getName());
+    static Boolean isIncludedField(
+        final SObject obj,
+        final Schema.DescribeFieldResult fieldDescribe
+    ) {
+        final String objectTypeName = obj
+            .getSObjectType()
+            .getDescribe()
+            .getName();
+        final Set<String> fields = IncludedFields.get(objectTypeName);
         return fields == null ? false : fields.contains(fieldDescribe.getName());
     }
 
-    static Boolean isPersonAccountField(Schema.DescribeFieldResult fieldDescribe) {
-        Boolean isPersonAccountEnabled = fieldMapFor('Account').get('IsPersonAccount') != null;
-        Set<string> skipPersonAccountFields = new Set<string>{ 'Salutation' };
+    static Boolean isPersonAccountField(final Schema.DescribeFieldResult fieldDescribe) {
+        final Boolean isPersonAccountEnabled = fieldMapFor('Account').get('IsPersonAccount') != null;
+        final Set<string> skipPersonAccountFields = new Set<string> {
+            'Salutation'
+        };
 
-        Boolean CustomPerson = fieldDescribe.isCustom() && fieldDescribe.getName().endsWith('pc');
-        Boolean StandardPerson = !fieldDescribe.isCustom() && fieldDescribe.getName().startsWith('Person');
+        final Boolean CustomPerson = (
+            fieldDescribe.isCustom() &&
+            fieldDescribe.getName().endsWith('pc')
+        );
+        final Boolean StandardPerson = (
+            !fieldDescribe.isCustom() &&
+            fieldDescribe.getName().startsWith('Person')
+        );
 
         return (
             CustomPerson ||
@@ -246,15 +387,20 @@ public with sharing class {{name}} {
         );
     }
 
-    static void setFieldValue(SObject obj, Schema.SObjectField field, Boolean cascade) {
+    static void setFieldValue(
+        final SObject obj,
+        final Schema.SObjectField field,
+        final Boolean cascade
+    ) {
         setFieldValue(obj, field, cascade, 0);
     }
 
     private static Boolean shouldIncludeField(
-        Schema.DescribeFieldResult fieldDescribe,
-        SObject obj,
-        Boolean cascade
+        final SObject obj,
+        final Schema.SObjectField field,
+        final Boolean cascade
     ) {
+        final Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
         return (
             fieldDescribe.getName() == 'IsActive' ||
             (
@@ -281,160 +427,245 @@ public with sharing class {{name}} {
         );
     }
 
-    static void setFieldValue(
-        SObject obj,
-        Schema.SObjectField field,
-        Boolean cascade,
-        Integer counter
+    static Long getRandomNumber() {
+        return getRandomNumber(0L);
+    }
+
+    static Long getRandomNumber(final Long lowerBound) {
+        return getRandomNumber(lowerBound, 1000L);
+    }
+
+    static Long getRandomNumber(
+        final Long lowerBound,
+        final Long range
     ) {
-        Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
-        if (shouldIncludeField(fieldDescribe, obj, cascade)) {
-            if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
-                // Picklist goes first, since we potential values are ready to be grabbed,
-                // and we can't really use any other value anyways.
-                obj.put(field, getDefaultPicklistValue(obj, fieldDescribe));
-            } else if (fieldDescribe.getName().endsWith('Country')) {
-                obj.put(field, DefaultCountry);
-            } else if (fieldDescribe.getName().endsWith('State')) {
-                obj.put(field, DefaultState);
-            } else if (fieldDescribe.getName().endsWith('CountryCode')) {
-                obj.put(field, DefaultCountryCode);
-            } else if (fieldDescribe.getName().endsWith('StateCode')) {
-                obj.put(field, DefaultStateCode);
-            } else if (
-                fieldDescribe.getType() == Schema.DisplayType.URL ||
-                fieldDescribe.getName().endsWith('Url')
-            ) {
-                String value = String.format(
-                    'http://test{0}.com',
-                    new List<String> {
-                        counter.format()
-                    }
-                );
-                obj.put(field, value);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.base64) {
-                Integer randomComponent = (Integer) (Math.random() * 1000);
-                String value = String.format(
-                    '{0}-{1}',
-                    new List<String> {
-                        counter.format(),
-                        randomComponent.format()
-                    }
-                );
-                obj.put(field, Blob.valueOf(value));
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Boolean) {
-                obj.put(field, true);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Combobox) {
-                obj.put(field, counter.format());
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Currency) {
-                obj.put(field, counter);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Date) {
-                obj.put(field, Date.today());
-            } else if (fieldDescribe.getType() == Schema.DisplayType.DateTime) {
-                obj.put(field, DateTime.now());
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Double) {
-                obj.put(field, counter);
-            } else if (
-                fieldDescribe.getName() == 'Username' ||
-                fieldDescribe.getType() == Schema.DisplayType.Email
-            ) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000);
-                String dateComponent = String.valueOf(Datetime.now().getTime());
-                String value = String.format(
-                    'test{0}{1}@test.com',
-                    new List<String> {
-                        randomComponent.format(),
-                        dateComponent
-                    }
-                );
-                obj.put(field, value);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.EncryptedString) {
-                obj.put(field, 's');
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Id) {
-                // Ignore, we don't specify ID's when creating objects.
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Integer) {
-                Integer value = (Integer) (Math.random() * 30);
-                obj.put(field, value);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.MultiPicklist) {
-                obj.put(field, getDefaultPicklistValue(obj, fieldDescribe));
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Percent) {
-                obj.put(field, counter);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Phone) {
-                obj.put(field, '123-456-7890');
-            } else if (
-                fieldDescribe.getName() == 'CommunityNickname' &&
-                fieldDescribe.getType() == Schema.DisplayType.String
-            ) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000);
-                String value = String.format(
-                    'test{0}',
-                    new List<String> {
-                        randomComponent.format()
-                    }
-                );
-                obj.put(field, value);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.String) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000);
-                Integer maxLength = fieldDescribe.getLength();
-                String preliminaryValue = String.format(
-                    'a{0}{1}',
-                    new List<String> {
-                        counter.format(),
-                        randomComponent.format()
-                    }
-                );
-                Integer valueLength = Math.min(maxLength, preliminaryValue.length());
-                String value = preliminaryValue.substring(0, valueLength);
-                obj.put(field, value);
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Reference) {
-                String referenceObjectType = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
+        final Double randomComponent = Math.random();
+        return (lowerBound + 1L) * (1L + randomComponent * range).longValue() - 1L;
+    }
 
-                if (referenceObjectType == 'RecordType') {
-                    setRecordType(obj);
-                } else if (referenceObjectType == 'Profile') {
-                    obj.put(field,userProfile.Id);
-                } else if (
-                    cascade &&
-                    referenceObjectType != obj.getSObjectType().getDescribe().getName() &&
-                    referenceObjectType != 'BusinessHours'
-                ) {
-                    System.debug(
-                        String.format(
-                            'Creating reference to {0} for field {1}.{2}',
-                            new List<String> {
-                                referenceObjectType,
-                                obj.getSObjectType().getDescribe().getName(),
-                                fieldDescribe.getName()
-                            }
-                        )
-                    );
-                    SObject reference = createSObject(referenceObjectType, cascade, counter + 1, false);
-                    if (reference == null) {
-                        System.debug('Skipping instance of type ' + referenceObjectType);
-                        obj.put(field, null);
-                        return;
-                    }
+    static Long getRandomNumberInRange(
+        final Long lowerBound,
+        final Long upperBound
+    ) {
+        final Double randomComponent = Math.random();
+        return lowerBound + (randomComponent * upperBound).longValue();
+    }
 
-                    obj.put(field, reference.Id);
+    public static void setNewValueForField(
+        final SObject obj,
+        final String fieldName
+    ) {
+        final String objectType = obj
+            .getSObjectType()
+            .getDescribe()
+            .getName();
+        final Schema.SObjectField field = fieldMapFor(objectType).get(fieldName);
+        final Object newValue = getNewValueForField(obj, field, false, 0);
+        obj.put(fieldName, newValue);
+    }
+
+    static Object getNewValueForField(
+        final SObject obj,
+        final Schema.SObjectField field,
+        final Boolean cascade,
+        final Integer counter
+    ) {
+        final Schema.SObjectType objectType = obj.getSObjectType();
+        final Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+        final Schema.DisplayType fieldType = fieldDescribe.getType();
+        final String fieldName = fieldDescribe.getName();
+
+        if (fieldType == Schema.DisplayType.Picklist) {
+            // Picklist goes first, since there's potential values are ready to
+            // be grabbed, and we can't really use any other value anyways
+            return getNewPicklistValue(obj, field);
+        } else if (fieldName.endsWith('Country')) {
+            return getNewCountry();
+        } else if (fieldName.endsWith('State')) {
+            return getNewState();
+        } else if (fieldName.endsWith('CountryCode')) {
+            return getNewCountryCode();
+        } else if (fieldName.endsWith('StateCode')) {
+            return getNewStateCode();
+        } else if (fieldName.endsWith('Latitude')) {
+            return (Double) getRandomNumberInRange(-90L, 90L);
+        } else if (fieldName.endsWith('Longitude')) {
+            return (Double) getRandomNumberInRange(-180L, 180L);
+        } else if (
+            fieldType == Schema.DisplayType.URL ||
+            fieldName.endsWith('Url')
+        ) {
+            final Long randomComponent = getRandomNumber(counter);
+            return String.format(
+                'http://test-{0}-{1}.com',
+                new List<String> {
+                    counter.format(),
+                    randomComponent.format()
                 }
-            } else if (fieldDescribe.getType() == Schema.DisplayType.TextArea) {
-                obj.put(field, counter.format());
-            } else if (fieldDescribe.getType() == Schema.DisplayType.Time) {
-                obj.put(field, Time.newInstance(0, 0, 0, 0));
-            } else {
-                System.debug('Unhandled field type ' + fieldDescribe.getType());
+            );
+        } else if (fieldType == Schema.DisplayType.base64) {
+            final Long randomComponent = getRandomNumber(counter);
+            final String value = String.format(
+                '{0}-{1}',
+                new List<String> {
+                    counter.format(),
+                    randomComponent.format()
+                }
+            );
+            return Blob.valueOf(value);
+        } else if (fieldType == Schema.DisplayType.Boolean) {
+            final Boolean prevValue = (Boolean) obj.get(field);
+            return !prevValue;
+        } else if (fieldType == Schema.DisplayType.Combobox) {
+            final Long randomComponent = getRandomNumber(counter);
+            return randomComponent.format();
+        } else if (fieldType == Schema.DisplayType.Currency) {
+            return getRandomNumber(counter);
+        } else if (fieldType == Schema.DisplayType.Date) {
+            final Integer randomComponent = getRandomNumber(counter, 365).intValue();
+            return Date.today().addDays(-randomComponent);
+        } else if (fieldType == Schema.DisplayType.DateTime) {
+            final Integer randomComponent = getRandomNumber(counter, 365).intValue();
+            return DateTime.now().addDays(-randomComponent);
+        } else if (fieldType == Schema.DisplayType.Double) {
+            return (Double) getRandomNumber(counter);
+        } else if (
+            fieldName == 'Username' ||
+            fieldType == Schema.DisplayType.Email
+        ) {
+            final Long randomComponent = getRandomNumber(counter);
+            return String.format(
+                'test-{0}-{1}@test.com',
+                new List<String> {
+                    counter.format(),
+                    randomComponent.format()
+                }
+            );
+        } else if (fieldType == Schema.DisplayType.EncryptedString) {
+            final Long randomComponent = getRandomNumber(counter);
+            return randomComponent.format();
+        } else if (fieldType == Schema.DisplayType.Id) {
+            // Ignore, we don't specify ID's when creating objects.
+        } else if (fieldType == Schema.DisplayType.Integer) {
+            return getRandomNumber(counter, 30).intValue();
+        } else if (fieldType == Schema.DisplayType.MultiPicklist) {
+            return getNewPicklistValue(obj, field);
+        } else if (fieldType == Schema.DisplayType.Percent) {
+            final Long randomComponent = getRandomNumber(counter);
+            return Math.mod(randomComponent, 100);
+        } else if (fieldType == Schema.DisplayType.Phone) {
+            final List<String> digits = new List<String>();
+            for (Integer i = 0; i < 10; ++i) {
+                final Integer digit = Math.mod(getRandomNumber().intValue(), 10);
+                digits.add(digit.format());
             }
+            return String.format('{0}{1}{2}-{3}{4}{5}-{6}{7}{8}{9}', digits);
+        } else if (
+            fieldName == 'CommunityNickname' &&
+            fieldType == Schema.DisplayType.String
+        ) {
+            final Long randomComponent = getRandomNumber(counter);
+            return String.format(
+                'test{0}',
+                new List<String> {
+                    randomComponent.format()
+                }
+            );
+        } else if (fieldType == Schema.DisplayType.String) {
+            final Long randomComponent = getRandomNumber(counter);
+            final Integer maxLength = fieldDescribe.getLength();
+            final String preliminaryValue = String.format(
+                'a{0}{1}',
+                new List<String> {
+                    counter.format(),
+                    randomComponent.format()
+                }
+            );
+            final Integer valueLength = Math.min(maxLength, preliminaryValue.length());
+            return preliminaryValue.substring(0, valueLength);
+        } else if (fieldType == Schema.DisplayType.Reference) {
+            final String referenceObjectTypeName = fieldDescribe
+                .getReferenceTo()[0]
+                .getDescribe()
+                .getName();
+            final String objectTypeName = objectType
+                .getDescribe()
+                .getName();
+
+            if (referenceObjectTypeName == 'RecordType') {
+                return getRecordTypeId(objectType);
+            } else if (referenceObjectTypeName == 'Profile') {
+                return UserProfile.Id;
+            } else if (
+                cascade &&
+                referenceObjectTypeName != objectTypeName &&
+                referenceObjectTypeName != 'BusinessHours'
+            ) {
+                System.debug(
+                    String.format(
+                        'Creating reference to {0} for field {1}.{2}',
+                        new List<String> {
+                            referenceObjectTypeName,
+                            objectTypeName,
+                            fieldName
+                        }
+                    )
+                );
+                final SObject reference = createSObject(
+                    referenceObjectTypeName,
+                    cascade,
+                    counter + 1,
+                    false
+                );
+                if (reference == null) {
+                    System.debug('Skipping instance of type ' + referenceObjectTypeName);
+                    return null;
+                }
+
+                return reference.Id;
+            }
+        } else if (fieldType == Schema.DisplayType.TextArea) {
+            return getRandomNumber(counter).format();
+        } else if (fieldType == Schema.DisplayType.Time) {
+            final Integer hour = Math.mod(getRandomNumber().intValue(), 24);
+            final Integer minutes = Math.mod(getRandomNumber().intValue(), 60);
+            final Integer seconds = Math.mod(getRandomNumber().intValue(), 60);
+            final Integer milliseconds = Math.mod(getRandomNumber().intValue(), 1000);
+            return Time.newInstance(hour, minutes, seconds, milliseconds);
+        } else {
+            System.debug('Unhandled field type ' + fieldType);
+        }
+        return null;
+    }
+
+    static void setFieldValue(
+        final SObject obj,
+        final Schema.SObjectField field,
+        final Boolean cascade,
+        final Integer counter
+    ) {
+        if (shouldIncludeField(obj, field, cascade)) {
+            final Object value = getNewValueForField(obj, field, cascade, counter);
+            obj.put(field, value);
         }
     }
 
-    static void setRecordType(SObject obj) {
-        List<Schema.RecordTypeInfo> recordTypes = obj.getSObjectType().getDescribe().getRecordTypeInfos();
+    static ID getRecordTypeId(final SObjectType objectType) {
+        final List<Schema.RecordTypeInfo> recordTypes = objectType
+            .getDescribe()
+            .getRecordTypeInfos();
         if (recordTypes.size() > 1) {   // All objects have default Master type
             for (Schema.RecordTypeInfo recordType : recordTypes) {
                 if (recordType.isAvailable() && recordType.isDefaultRecordTypeMapping()) {
-                    obj.put('RecordTypeId', recordType.getRecordTypeId());
+                    return recordType.getRecordTypeId();
                 }
             }
         }
+        return null;
+    }
+
+    static void setRecordType(final SObject obj) {
+        final ID recordTypeId = getRecordTypeId(obj.getSObjectType());
+        obj.put('RecordTypeId', recordTypeId);
     }
 }

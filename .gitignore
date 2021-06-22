@@ -1,9 +1,14 @@
+# Environment files
+.sfdx
+
 # Build output
 dist
 
 # Dependency files
 node_modules
 
-# Coverage reports
+# Test reports
 .nyc_output
 coverage
+test/**/test-results*.json
+test/**/webhook-data*.json

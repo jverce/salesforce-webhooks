@@ -8,6 +8,7 @@ public class {{testClassName}} {
         insert a;
         update a;
     }
+
     @isTest
     static void testSingle() {
         Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
