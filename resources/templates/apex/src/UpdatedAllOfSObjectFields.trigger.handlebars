@@ -1,10 +1,4 @@
 trigger {{triggerName}} on {{sObjectType}} (after update) {
-    if (Trigger.OldMap == null) {
-        // We cannot compare the old a new versions of the objects, so we cannot
-        // check if specific fields have changed
-        return;
-    }
-
     final List<SObjectField> fields = {{sObjectType}}.getSObjectType()
         .getDescribe()
         .fields
