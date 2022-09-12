@@ -50,7 +50,7 @@ Salesforce organization:
 
 - **Salesforce auth token**: a valid REST API token with write access to the
   Salesforce SOAP API (see for example the [Salesforce REST API Developer
-  Guide(<https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/quickstart_oauth.htm>)])
+  Guide](<https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/quickstart_oauth.htm>))
 - **Instance**: the instance identifier where the target organization is
   running. See [this
   page](https://help.salesforce.com/articleView?id=000314281&type=1&mode=1&language=en_US)
