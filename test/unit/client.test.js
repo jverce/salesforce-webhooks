@@ -218,6 +218,38 @@ describe("Salesforce webhook creation", function () {
     await expect(client.createWebhook(opts)).to.be.rejected;
   });
 
+  it("should skip validation for custom SObject types", async function () {
+    const opts = {
+      sObjectType: "CustomObjectType",
+      endpointUrl: "https://example.com",
+      skipValidation: true,
+    };
+
+    const describeApiUrl = `${client.sObjectsApiUrl}/${opts.sObjectType}/describe`;
+    sandbox
+      .stub(axios, "get")
+      .withArgs(describeApiUrl, sinon.match.any)
+      .resolves({
+        data: {},
+      });
+    const postStub = sandbox
+      .stub(axios, "post")
+      .resolves({
+        data: remoteSiteSettings.success,
+      });
+
+    await client.createWebhookNew(opts);
+    await client.createWebhook({
+      ...opts,
+      event: "new",
+    });
+
+    // We make 2 POST requests per webhook:
+    // 1. To whitelist the endpoint URL (i.e. RemoteSiteSetting)
+    // 2. To deploy the Apex code (i.e. CompileAndTest)
+    sinon.assert.callCount(postStub, 4);
+  });
+
   it("should create webhooks for supported types to listen to new objects", async function () {
     const opts = {
       sObjectType: "Account",
