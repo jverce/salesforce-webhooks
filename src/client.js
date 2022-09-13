@@ -345,15 +345,23 @@ export class SalesforceClient {
 
   _validateCreateWebhookOpts({
     endpointUrl,
+    event,
     sObjectType,
     fieldsToCheck = [],
     fieldsToCheckMode = "any",
+    skipValidation = false,
   }) {
     if (!endpointUrl) {
       throw new Error("Parameter 'endpointUrl' is required.");
     }
     if (!sObjectType) {
       throw new Error("Parameter 'sObjectType' is required.");
+    }
+    const allowedSObjectTypes = SalesforceClient.getAllowedSObjects(event);
+    if (!skipValidation && !allowedSObjectTypes.includes(sObjectType)) {
+      throw new Error(
+        `${sObjectType} is not supported for events of type "${event}".`,
+      );
     }
     if (!Array.isArray(fieldsToCheck)) {
       throw new Error("Parameter 'fieldsToCheck' must be an array of strings.");
@@ -433,7 +441,10 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookNew(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: "new",
+    });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
@@ -486,7 +497,10 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookUpdated(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: "updated",
+    });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
@@ -551,7 +565,10 @@ export class SalesforceClient {
    * `deleteWebhook`.
    */
   async createWebhookDeleted(opts) {
-    this._validateCreateWebhookOpts(opts);
+    this._validateCreateWebhookOpts({
+      ...opts,
+      event: "deleted",
+    });
 
     // Change events should be treated differently as they are special objects
     // that get triggered asynchronously whenever their associated entity is
