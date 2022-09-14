@@ -3820,7 +3820,7 @@ levn@^0.4.1:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
 
-libxmljs@^0.19.7:
+libxmljs@^0.19.10:
   version "0.19.10"
   resolved "https://registry.yarnpkg.com/libxmljs/-/libxmljs-0.19.10.tgz#aa169b937a3c93940c07f802a73844df30f5c4d4"
   integrity sha512-RY5/MD8Po8sGVocbODbYcdrbP6pJyA171LjFyd7Bp9wwxhmA8C5bm/VmXfpdED07fdW0FeC3lopxhG7UbwGx+g==

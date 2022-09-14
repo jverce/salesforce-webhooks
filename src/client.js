@@ -349,6 +349,7 @@ export class SalesforceClient {
     sObjectType,
     fieldsToCheck = [],
     fieldsToCheckMode = "any",
+    skipValidation = false,
   }) {
     if (!endpointUrl) {
       throw new Error("Parameter 'endpointUrl' is required.");
@@ -357,7 +358,7 @@ export class SalesforceClient {
       throw new Error("Parameter 'sObjectType' is required.");
     }
     const allowedSObjectTypes = SalesforceClient.getAllowedSObjects(event);
-    if (!allowedSObjectTypes.includes(sObjectType)) {
+    if (!skipValidation && !allowedSObjectTypes.includes(sObjectType)) {
       throw new Error(
         `${sObjectType} is not supported for events of type "${event}".`,
       );
