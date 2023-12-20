@@ -13,7 +13,7 @@ public class {{testClassName}} {
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
         for ({{@root.sObjectType}} item : a) {
-            item.{{this}} += item.{{this}};
+            item.{{this}} = (item.{{this}} != null) ? item.{{this}} + item.{{this}} : 'default@example.com';
         }
         update a;
 
@@ -30,7 +30,7 @@ public class {{testClassName}} {
 
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
-        a.{{this}} += a.{{this}};
+        a.{{this}} = (a.{{this}} != null) ? a.{{this}} + a.{{this}} : 'default@example.com';
         update a;
 
         {{/each}}
