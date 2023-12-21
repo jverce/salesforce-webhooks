@@ -65,7 +65,6 @@ jobs:
 
     environment:
       KEYS_DIR: '/tmp/keys'
-      DX_CLI_URL: 'https://developer.salesforce.com/media/salesforce-cli/sf/channels/stable/sf-linux-x64.tar.xz'
 
     steps:
       - checkout
@@ -118,10 +117,17 @@ jobs:
           no_output_timeout: 270m
           environment:
             SALESFORCE_API_VERSION: '50.0'
-            TEST_REPORTS_DIR_BASE: test_reports
           command: |
             sfdx config:set --global defaultusername=${HUB_SFDC_USER}
             ./deploy_and_test_apex.sh
+
+      - run:
+          name: Generate Test Report
+          working_directory: test/integ
+          environment:
+            TEST_REPORTS_DIR_BASE: test_reports
+          command: |
+            ./generate_test_report.sh
 
       - store_test_results:
           path: test/integ/test_reports

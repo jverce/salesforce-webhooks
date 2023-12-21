@@ -2,7 +2,7 @@
 
 const testResults = require("./test-results.json");
 
-const hadErrors = testResults.some((t) => t.status !== 0);
+const hadErrors = testResults.some((t) => !!t.status);
 if (hadErrors) {
   console.error("Errors while running integration tests");
   process.exit(1);
