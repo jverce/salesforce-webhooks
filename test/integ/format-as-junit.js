@@ -5,10 +5,12 @@ const testResults = require("./test-results.json");
 
 const toTestCase = (testResult) => {
   const {
-    status, testResultsFilename,
+    status,
+    testResultsFilename,
   } = testResult;
   const {
-    sObjectType, event,
+    sObjectType,
+    event,
   } = testResultsFilename.match(
     /^test-results-(?<sObjectType>.*)-(?<event>.*)\.json$/,
   ).groups;
@@ -17,7 +19,7 @@ const toTestCase = (testResult) => {
   const baseObj = {
     name,
   };
-  if (status !== 0) {
+  if (status) {
     const { stack } = testResult;
     const systemErr = stack.split("\n");
     return {
