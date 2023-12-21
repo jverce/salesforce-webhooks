@@ -65,7 +65,7 @@ jobs:
 
     environment:
       KEYS_DIR: '/tmp/keys'
-      DX_CLI_URL: 'https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz'
+      DX_CLI_URL: 'https://developer.salesforce.com/media/salesforce-cli/sf/channels/stable/sf-linux-x64.tar.xz'
 
     steps:
       - checkout
@@ -171,7 +171,6 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
             yarn publish
 
-
 non_master: &non_master
   filters:
     branches:
@@ -190,7 +189,6 @@ tagged_only: &tagged_only
       ignore: /.*/
 
 workflows:
-
   development:
     jobs:
       - verify_code:
