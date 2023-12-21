@@ -37,6 +37,7 @@
   },
   "homepage": "https://github.com/jverce/salesforce-webhooks#readme",
   "devDependencies": {
+    "@salesforce/cli": "^2.21.8",
     "antlr4ts": "^0.5.0-alpha.3",
     "apex-parser": "^2.5.0",
     "c8": "^7.7.3",
