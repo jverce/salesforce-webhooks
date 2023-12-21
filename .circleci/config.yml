@@ -76,11 +76,7 @@ jobs:
       - run:
           name: Salesforce CLI
           command: |
-            mkdir sfdx
-            wget -qO- ${DX_CLI_URL} | tar xJ -C sfdx --strip-components 1
-            ./sfdx/install
-            sfdx
-            mkdir tmp
+            yarn global add @salesforce/cli
 
       - run:
           name: Other Dependencies
@@ -109,11 +105,12 @@ jobs:
           name: Setup Org
           command: |
             sfdx force:auth:jwt:grant \
-              --clientid ${HUB_CONSUMER_KEY} \
-              --jwtkeyfile ${KEYS_DIR}/server.key \
+              --client-id ${HUB_CONSUMER_KEY} \
+              --jwt-key-file ${KEYS_DIR}/server.key \
               --username ${HUB_SFDC_USER} \
-              --setdefaultdevhubusername \
-              -a hub
+              --set-default-dev-hub \
+              --alias hub \
+              --set-default
 
       - run:
           name: Integration Tests
@@ -123,7 +120,7 @@ jobs:
             SALESFORCE_API_VERSION: '50.0'
             TEST_REPORTS_DIR_BASE: test_reports
           command: |
-            sfdx config:set defaultusername=${HUB_SFDC_USER}
+            sfdx config:set --global defaultusername=${HUB_SFDC_USER}
             ./deploy_and_test_apex.sh
 
       - store_test_results:

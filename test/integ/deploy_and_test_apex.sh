@@ -36,7 +36,7 @@ do
         -w5 \
         -r json \
         -c \
-        -u "${HUB_SFDC_USER}" \
+        --target-org "${HUB_SFDC_USER}" \
         > ${TEST_RESULTS_FILE}
     echo "Tests finished"
 
@@ -100,7 +100,7 @@ do
             -w5 \
             -r json \
             -c \
-            -u "${HUB_SFDC_USER}" \
+            --target-org "${HUB_SFDC_USER}" \
             > ${TEST_RESULTS_FILE}
         echo "Tests finished"
 
