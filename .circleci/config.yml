@@ -65,7 +65,6 @@ jobs:
 
     environment:
       KEYS_DIR: '/tmp/keys'
-      DX_CLI_URL: 'https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz'
 
     steps:
       - checkout
@@ -76,11 +75,7 @@ jobs:
       - run:
           name: Salesforce CLI
           command: |
-            mkdir sfdx
-            wget -qO- ${DX_CLI_URL} | tar xJ -C sfdx --strip-components 1
-            ./sfdx/install
-            sfdx
-            mkdir tmp
+            yarn global add @salesforce/cli
 
       - run:
           name: Other Dependencies
@@ -109,11 +104,12 @@ jobs:
           name: Setup Org
           command: |
             sfdx force:auth:jwt:grant \
-              --clientid ${HUB_CONSUMER_KEY} \
-              --jwtkeyfile ${KEYS_DIR}/server.key \
+              --client-id ${HUB_CONSUMER_KEY} \
+              --jwt-key-file ${KEYS_DIR}/server.key \
               --username ${HUB_SFDC_USER} \
-              --setdefaultdevhubusername \
-              -a hub
+              --set-default-dev-hub \
+              --alias hub \
+              --set-default
 
       - run:
           name: Integration Tests
@@ -121,10 +117,17 @@ jobs:
           no_output_timeout: 270m
           environment:
             SALESFORCE_API_VERSION: '50.0'
+          command: |
+            sfdx config:set --global defaultusername=${HUB_SFDC_USER}
+            ./deploy_and_test_apex.sh
+
+      - run:
+          name: Generate Test Report
+          working_directory: test/integ
+          environment:
             TEST_REPORTS_DIR_BASE: test_reports
           command: |
-            sfdx config:set defaultusername=${HUB_SFDC_USER}
-            ./deploy_and_test_apex.sh
+            ./generate_test_report.sh
 
       - store_test_results:
           path: test/integ/test_reports
@@ -141,6 +144,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - 'eb:79:6a:d5:94:92:0f:75:b8:29:75:8c:56:bd:4a:f2'
+            - 'c1:97:c0:95:c0:48:3a:6d:b3:2f:29:3a:8d:5b:ff:fa'
 
       - run:
           name: Set up Git
@@ -171,7 +175,6 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
             yarn publish
 
-
 non_master: &non_master
   filters:
     branches:
@@ -190,7 +193,6 @@ tagged_only: &tagged_only
       ignore: /.*/
 
 workflows:
-
   development:
     jobs:
       - verify_code:
