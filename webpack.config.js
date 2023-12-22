@@ -31,7 +31,7 @@ const baseConfig = {
 };
 
 const productionConfig = {
-  devtool: "hidden-source-map",
+  devtool: "source-map",
   optimization: {
     minimize: true,
     moduleIds: "size",
