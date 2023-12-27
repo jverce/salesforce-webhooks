@@ -5,6 +5,7 @@ public class {{testClassName}} {
         Test.setMock(HttpCalloutMock.class, new {{webhookCalloutMockName}}('{{endpointUrl}}'));
         List<{{sObjectType}}> a =
             (List<{{sObjectType}}>) {{sObjectFactoryName}}.createSObjectList('{{sObjectType}}', true, 4);
+        Map<String, Schema.SObjectField> fieldsByName = SObjectFactory.fieldMapFor('{{sObjectType}}');
         insert a;
 
         // Base case
@@ -13,7 +14,7 @@ public class {{testClassName}} {
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
         for ({{@root.sObjectType}} item : a) {
-            item.{{this}} += item.{{this}};
+            SObjectFactory.setFieldValue(item, fieldsByName.get('{{this}}'));
         }
         update a;
 
@@ -30,7 +31,7 @@ public class {{testClassName}} {
 
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
-        a.{{this}} += a.{{this}};
+        SObjectFactory.setFieldValue(a, fieldsByName.get('{{this}}'));
         update a;
 
         {{/each}}

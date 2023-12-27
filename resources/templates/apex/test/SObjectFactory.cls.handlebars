@@ -246,6 +246,10 @@ public with sharing class {{name}} {
         );
     }
 
+    static void setFieldValue(SObject obj, Schema.SObjectField field) {
+        setFieldValue(obj, field, false);
+    }
+
     static void setFieldValue(SObject obj, Schema.SObjectField field, Boolean cascade) {
         setFieldValue(obj, field, cascade, 0);
     }
