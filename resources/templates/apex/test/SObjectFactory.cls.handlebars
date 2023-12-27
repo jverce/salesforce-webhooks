@@ -340,6 +340,7 @@ public with sharing class {{name}} {
                 obj.put(field, counter);
             } else if (
                 fieldDescribe.getName() == 'Username' ||
+                fieldDescribe.getType() == Schema.DisplayType.Username ||
                 fieldDescribe.getType() == Schema.DisplayType.Email
             ) {
                 Long randomComponent = Math.roundToLong(Math.random() * 1000);
