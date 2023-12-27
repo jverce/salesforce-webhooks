@@ -1,6 +1,6 @@
 {
   "name": "salesforce-webhooks",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "Provides an interface to create webhooks in Salesforce for different SObject events",
   "keywords": [
     "salesforce",
