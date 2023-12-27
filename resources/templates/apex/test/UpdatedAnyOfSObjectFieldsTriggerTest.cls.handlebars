@@ -15,7 +15,7 @@ public class {{testClassName}} {
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
         for ({{@root.sObjectType}} item : a) {
-            {{sObjectFactoryName}}.setFieldValue(item, fieldsByName.get('{{this}}'));
+            {{@root.sObjectFactoryName}}.setFieldValue(item, fieldsByName.get('{{this}}'));
         }
         update a;
 
@@ -34,7 +34,7 @@ public class {{testClassName}} {
 
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
-        {{sObjectFactoryName}}.setFieldValue(a, fieldsByName.get('{{this}}'));
+        {{@root.sObjectFactoryName}}.setFieldValue(a, fieldsByName.get('{{this}}'));
         update a;
 
         {{/each}}
