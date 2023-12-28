@@ -258,6 +258,13 @@ public with sharing class {{name}} {
         );
     }
 
+    static void setFieldValue(SObject obj, String fieldName) {
+        Schema.SObjectField field = fieldMapFor(
+            obj.getSObjectType().getDescribe().getName()
+        ).get(fieldName);
+        setFieldValue(obj, field, false);
+    }
+
     static void setFieldValue(SObject obj, Schema.SObjectField field) {
         setFieldValue(obj, field, false);
     }
