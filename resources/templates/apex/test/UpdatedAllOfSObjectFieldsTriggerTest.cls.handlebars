@@ -13,7 +13,12 @@ public class {{testClassName}} {
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
         for ({{@root.sObjectType}} item : a) {
-            item.{{this}} = (item.{{this}} != null) ? item.{{this}} + item.{{this}} : 'default@example.com';
+            try {
+                item.{{this}} += item.{{this}};
+            } catch (Exception e) {
+                System.debug("Could not update field '{{this}}': " + e.getMessage());
+                {{@root.sObjectFactoryName}}.setFieldValue(item, '{{this}}');
+            }
         }
         update a;
 
@@ -30,7 +35,12 @@ public class {{testClassName}} {
 
         {{#each fieldsToCheck}}
         // Update only the '{{this}}' field
-        a.{{this}} = (a.{{this}} != null) ? a.{{this}} + a.{{this}} : 'default@example.com';
+        try {
+            a.{{this}} += a.{{this}};
+        } catch (Exception e) {
+            System.debug("Could not update field '{{this}}': " + e.getMessage());
+            {{@root.sObjectFactoryName}}.setFieldValue(a, '{{this}}');
+        }
         update a;
 
         {{/each}}

@@ -7,3 +7,8 @@ node_modules
 # Coverage reports
 .nyc_output
 coverage
+
+# Sensitive data
+.env
+**/server.crt
+**/server.key

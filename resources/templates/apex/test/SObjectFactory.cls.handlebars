@@ -246,6 +246,29 @@ public with sharing class {{name}} {
         );
     }
 
+    private static String newEmailAddress() {
+        Long randomComponent = Math.roundToLong(Math.random() * 1000);
+        String dateComponent = String.valueOf(Datetime.now().getTime());
+        return String.format(
+            'test{0}{1}@test.com',
+            new List<String> {
+                randomComponent.format(),
+                dateComponent
+            }
+        );
+    }
+
+    static void setFieldValue(SObject obj, String fieldName) {
+        Schema.SObjectField field = fieldMapFor(
+            obj.getSObjectType().getDescribe().getName()
+        ).get(fieldName);
+        setFieldValue(obj, field, false);
+    }
+
+    static void setFieldValue(SObject obj, Schema.SObjectField field) {
+        setFieldValue(obj, field, false);
+    }
+
     static void setFieldValue(SObject obj, Schema.SObjectField field, Boolean cascade) {
         setFieldValue(obj, field, cascade, 0);
     }
@@ -338,16 +361,7 @@ public with sharing class {{name}} {
                 fieldDescribe.getName() == 'Username' ||
                 fieldDescribe.getType() == Schema.DisplayType.Email
             ) {
-                Long randomComponent = Math.roundToLong(Math.random() * 1000);
-                String dateComponent = String.valueOf(Datetime.now().getTime());
-                String value = String.format(
-                    'test{0}{1}@test.com',
-                    new List<String> {
-                        randomComponent.format(),
-                        dateComponent
-                    }
-                );
-                obj.put(field, value);
+                obj.put(field, newEmailAddress());
             } else if (fieldDescribe.getType() == Schema.DisplayType.EncryptedString) {
                 obj.put(field, 's');
             } else if (fieldDescribe.getType() == Schema.DisplayType.Id) {
@@ -392,7 +406,9 @@ public with sharing class {{name}} {
                 if (referenceObjectType == 'RecordType') {
                     setRecordType(obj);
                 } else if (referenceObjectType == 'Profile') {
-                    obj.put(field,userProfile.Id);
+                    obj.put(field, userProfile.Id);
+                } else if (referenceObjectType == 'Username') {
+                    obj.put(field, newEmailAddress());
                 } else if (
                     cascade &&
                     referenceObjectType != obj.getSObjectType().getDescribe().getName() &&
