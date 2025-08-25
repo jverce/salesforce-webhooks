@@ -3,7 +3,7 @@ version: 2.1
 defaults: &defaults
   working_directory: ~/repo
   docker:
-    - image: cimg/node:lts
+    - image: cimg/node:20.19
 
 jobs:
   verify_code:
