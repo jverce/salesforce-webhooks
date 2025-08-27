@@ -11,6 +11,7 @@ describe("SOAP request utils", function () {
       authToken,
       endpointUrl,
     );
+    console.log('about to call parseXml 1');
     const result = parseXml(requestBody);
     expect(result.errors.length).to.equal(0);
   });
@@ -22,6 +23,7 @@ describe("SOAP request utils", function () {
       authToken,
       remoteSiteName,
     );
+    console.log('about to call parseXml 2');
     const result = parseXml(requestBody);
     expect(result.errors.length).to.equal(0);
   });

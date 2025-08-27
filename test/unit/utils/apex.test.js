@@ -295,6 +295,7 @@ describe("SOAP request utils", function () {
       triggers,
     );
 
+    console.log('about to call parseXml 3');
     const result = parseXml(requestBody);
     expect(result.errors.length).to.equal(0);
   });
@@ -329,6 +330,7 @@ describe("SOAP request utils", function () {
       triggers.map((i) => i.name),
     );
 
+    console.log('about to call parseXml 4');
     const result = parseXml(requestBody);
     expect(result.errors.length).to.equal(0);
   });
