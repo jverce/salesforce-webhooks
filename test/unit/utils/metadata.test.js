@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { parseXml } from "libxmljs";
+import { parseXml } from "libxmljs2";
 import { describe } from "mocha";
 import * as metadata from "../../../src/utils/metadata";
 

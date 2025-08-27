@@ -8,7 +8,7 @@ import {
 } from "apex-parser";
 import { CaseInsensitiveInputStream } from "apex-parser/lib/CaseInsensitiveInputStream";
 import { expect } from "chai";
-import { parseXml } from "libxmljs";
+import { parseXml } from "libxmljs2";
 import { describe } from "mocha";
 import * as apex from "../../../src/utils/apex";
 
