@@ -16,7 +16,7 @@ public class {{testClassName}} {
             try {
                 item.{{this}} += item.{{this}};
             } catch (Exception e) {
-                System.debug("Could not update field '{{this}}': " + e.getMessage());
+                System.debug('Could not update field ' + '{{this}}' + ': ' + e.getMessage());
                 {{@root.sObjectFactoryName}}.setFieldValue(item, '{{this}}');
             }
         }
@@ -38,7 +38,7 @@ public class {{testClassName}} {
         try {
             a.{{this}} += a.{{this}};
         } catch (Exception e) {
-            System.debug("Could not update field '{{this}}': " + e.getMessage());
+            System.debug('Could not update field ' + '{{this}}' + ': ' + e.getMessage());
             {{@root.sObjectFactoryName}}.setFieldValue(a, '{{this}}');
         }
         update a;
