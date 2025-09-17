@@ -3,6 +3,8 @@
 # Abort the script if any of the commands below is not executed successfully
 set -e
 
+mkdir -p force-app
+
 #
 # Change events
 #
@@ -15,7 +17,9 @@ do
 
     # Enabling the change event listener
     sed -e "s/CHANGE_EVENT/${SOBJECT_TYPE}/g" metadata/package-template.xml > metadata/package.xml
-    sfdx force:mdapi:deploy -d metadata -w2
+    sf project deploy start \
+        --metadata-dir metadata \
+        --wait 2
 
     # Create webhooks
     echo "Creating webhook for ${SOBJECT_TYPE}..."
@@ -43,7 +47,9 @@ do
     # Disabling the change event listener
     cp metadata/package-base.xml metadata/package.xml
     sed -e "s/CHANGE_EVENT/${SOBJECT_TYPE}/g" metadata/destructiveChanges-template.xml > metadata/destructiveChanges.xml
-    sfdx force:mdapi:deploy -d metadata -w2
+    sf project deploy start \
+        --metadata-dir metadata \
+        --wait 2
 
     # Cleanup temp metadata files
     rm metadata/package.xml
