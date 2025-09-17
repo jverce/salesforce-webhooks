@@ -45,6 +45,7 @@ describe("Salesforce client constructor", function () {
     };
     process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
     process.env.SALESFORCE_INSTANCE = "some-instance";
+    delete process.env.SALESFORCE_API_VERSION;
 
     const client = new SalesforceClient();
 
@@ -102,6 +103,7 @@ describe("Salesforce client constructor", function () {
       ...process.env,
     };
     process.env.SALESFORCE_INSTANCE = "some-instance";
+    process.env.SALESFORCE_API_VERSION = "50.0";
 
     const client = new SalesforceClient({
       authToken: "some-other-token",
@@ -131,6 +133,7 @@ describe("Salesforce client constructor", function () {
       ...process.env,
     };
     process.env.SALESFORCE_AUTH_TOKEN = "some-auth-token";
+    process.env.SALESFORCE_API_VERSION = "50.0";
 
     const client = new SalesforceClient({
       instance: "some-other-instance",
